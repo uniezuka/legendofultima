@@ -6,12 +6,19 @@ import { BOARD_ROWS, BOARD_COLS } from '../constants/board'
 
 let nextPathId = 1
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
 export function generatePaths(): PathOption[] {
-  return Array.from({ length: 3 }, () => {
-    const shape = PATH_SHAPES[Math.floor(Math.random() * PATH_SHAPES.length)]
-    const cost = Math.floor(Math.random() * 6) + 1
-    return { id: `path-${nextPathId++}`, shape, cost }
-  })
+  const shapes = shuffle(PATH_SHAPES).slice(0, 3)
+  const costs = shuffle([1, 2, 3, 4, 5, 6]).slice(0, 3)
+  return shapes.map((shape, i) => ({ id: `path-${nextPathId++}`, shape, cost: costs[i] }))
 }
 
 function rotateCoord(c: Coord, times: number): Coord {

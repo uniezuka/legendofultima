@@ -3,6 +3,10 @@ import type { Monster } from '../types/monster'
 import type { PlayerId } from '../types/game'
 import { BOARD_ROWS, BOARD_COLS } from '../constants/board'
 
+export function coordKey(c: { row: number; col: number }): string {
+  return `${c.row},${c.col}`
+}
+
 const DIRS = [{ row: -1, col: 0 }, { row: 1, col: 0 }, { row: 0, col: -1 }, { row: 0, col: 1 }]
 
 function inBounds(r: number, c: number): boolean {

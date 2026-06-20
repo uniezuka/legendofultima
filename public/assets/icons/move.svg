@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">
+  <!-- boot / footprint - move -->
+  <!-- boot shape -->
+  <rect x="6" y="2" width="8" height="10" fill="#5a3a10"/>
+  <rect x="5" y="3" width="10" height="8" fill="#6a4a18"/>
+  <rect x="6" y="3" width="8" height="7" fill="#7a5a28"/>
+  <!-- boot tongue/trim top -->
+  <rect x="7" y="2" width="6" height="3" fill="#8a6a38"/>
+  <!-- lace dots -->
+  <rect x="8" y="4" width="2" height="1" fill="#aaaaaa"/>
+  <rect x="12" y="4" width="2" height="1" fill="#aaaaaa"/>
+  <rect x="8" y="6" width="2" height="1" fill="#aaaaaa"/>
+  <rect x="12" y="6" width="2" height="1" fill="#aaaaaa"/>
+  <!-- ankle/heel -->
+  <rect x="5" y="11" width="12" height="3" fill="#5a3a10"/>
+  <rect x="5" y="12" width="12" height="2" fill="#6a4a18"/>
+  <!-- sole/toe -->
+  <rect x="4" y="14" width="16" height="4" fill="#3a2808"/>
+  <rect x="3" y="15" width="16" height="4" fill="#4a3010"/>
+  <rect x="4" y="15" width="14" height="3" fill="#5a3a18"/>
+  <!-- toe box -->
+  <rect x="3" y="16" width="6" height="3" fill="#3a2808"/>
+  <rect x="2" y="17" width="6" height="3" fill="#4a3010"/>
+  <!-- heel -->
+  <rect x="15" y="15" width="4" height="4" fill="#3a2808"/>
+  <!-- motion lines -->
+  <rect x="18" y="8" width="6" height="1" fill="#aaaaaa" opacity="0.7"/>
+  <rect x="19" y="10" width="5" height="1" fill="#aaaaaa" opacity="0.5"/>
+  <rect x="20" y="12" width="4" height="1" fill="#aaaaaa" opacity="0.4"/>
+</svg>

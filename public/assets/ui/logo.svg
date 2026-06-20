@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" shape-rendering="crispEdges">
+  <!-- dark background parchment -->
+  <rect width="240" height="80" fill="#0a0818"/>
+  <rect x="2" y="2" width="236" height="76" fill="#10102a"/>
+  <!-- decorative border -->
+  <rect x="0" y="0" width="240" height="4" fill="#c8a040"/>
+  <rect x="0" y="76" width="240" height="4" fill="#c8a040"/>
+  <rect x="0" y="0" width="4" height="80" fill="#c8a040"/>
+  <rect x="236" y="0" width="4" height="80" fill="#c8a040"/>
+  <!-- corner ornaments -->
+  <rect x="4" y="4" width="12" height="4" fill="#e8c060"/>
+  <rect x="4" y="4" width="4" height="12" fill="#e8c060"/>
+  <rect x="224" y="4" width="12" height="4" fill="#e8c060"/>
+  <rect x="232" y="4" width="4" height="12" fill="#e8c060"/>
+  <rect x="4" y="72" width="12" height="4" fill="#e8c060"/>
+  <rect x="4" y="64" width="4" height="12" fill="#e8c060"/>
+  <rect x="224" y="72" width="12" height="4" fill="#e8c060"/>
+  <rect x="232" y="64" width="4" height="12" fill="#e8c060"/>
+  <!-- gem/diamond top center -->
+  <rect x="114" y="2" width="12" height="4" fill="#6a40cc"/>
+  <rect x="112" y="4" width="16" height="6" fill="#8855ee"/>
+  <rect x="110" y="8" width="20" height="4" fill="#aa77ff"/>
+  <rect x="112" y="12" width="16" height="4" fill="#8855ee"/>
+  <rect x="114" y="14" width="12" height="2" fill="#6a40cc"/>
+  <!-- "LEGEND" text - pixel font style -->
+  <!-- L -->
+  <rect x="18" y="24" width="4" height="24" fill="#e8c060"/>
+  <rect x="18" y="44" width="14" height="4" fill="#e8c060"/>
+  <!-- E -->
+  <rect x="36" y="24" width="4" height="24" fill="#e8c060"/>
+  <rect x="36" y="24" width="14" height="4" fill="#e8c060"/>
+  <rect x="36" y="34" width="10" height="4" fill="#e8c060"/>
+  <rect x="36" y="44" width="14" height="4" fill="#e8c060"/>
+  <!-- G -->
+  <rect x="54" y="24" width="14" height="4" fill="#e8c060"/>
+  <rect x="54" y="44" width="14" height="4" fill="#e8c060"/>
+  <rect x="54" y="24" width="4" height="24" fill="#e8c060"/>
+  <rect x="62" y="34" width="6" height="4" fill="#e8c060"/>
+  <rect x="64" y="34" width="4" height="14" fill="#e8c060"/>
+  <!-- E -->
+  <rect x="72" y="24" width="4" height="24" fill="#e8c060"/>
+  <rect x="72" y="24" width="14" height="4" fill="#e8c060"/>
+  <rect x="72" y="34" width="10" height="4" fill="#e8c060"/>
+  <rect x="72" y="44" width="14" height="4" fill="#e8c060"/>
+  <!-- N -->
+  <rect x="90" y="24" width="4" height="24" fill="#e8c060"/>
+  <rect x="90" y="24" width="4" height="8" fill="#e8c060"/>
+  <rect x="94" y="28" width="4" height="8" fill="#e8c060"/>
+  <rect x="98" y="32" width="4" height="8" fill="#e8c060"/>
+  <rect x="102" y="36" width="4" height="12" fill="#e8c060"/>
+  <rect x="102" y="24" width="4" height="24" fill="#e8c060"/>
+  <!-- D -->
+  <rect x="110" y="24" width="4" height="24" fill="#e8c060"/>
+  <rect x="110" y="24" width="12" height="4" fill="#e8c060"/>
+  <rect x="110" y="44" width="12" height="4" fill="#e8c060"/>
+  <rect x="120" y="28" width="4" height="16" fill="#e8c060"/>
+  <!-- "OF" line separator -->
+  <rect x="18" y="52" width="204" height="2" fill="#c8a040" opacity="0.6"/>
+  <!-- OF text smaller -->
+  <rect x="108" y="55" width="4" height="12" fill="#c8a060"/>
+  <rect x="112" y="55" width="8" height="4" fill="#c8a060"/>
+  <rect x="112" y="63" width="8" height="4" fill="#c8a060"/>
+  <rect x="120" y="55" width="4" height="12" fill="#c8a060"/>
+  <rect x="126" y="59" width="8" height="4" fill="#c8a060"/>
+  <rect x="126" y="55" width="8" height="4" fill="#c8a060"/>
+  <rect x="126" y="63" width="8" height="4" fill="#c8a060"/>
+  <!-- "ULTIMA" text -->
+  <!-- U -->
+  <rect x="18" y="55" width="4" height="16" fill="#f0d880"/>
+  <rect x="30" y="55" width="4" height="16" fill="#f0d880"/>
+  <rect x="18" y="67" width="16" height="4" fill="#f0d880"/>
+  <!-- L -->
+  <rect x="38" y="55" width="4" height="20" fill="#f0d880"/>
+  <rect x="38" y="71" width="12" height="4" fill="#f0d880"/>
+  <!-- T -->
+  <rect x="54" y="55" width="16" height="4" fill="#f0d880"/>
+  <rect x="60" y="55" width="4" height="20" fill="#f0d880"/>
+  <!-- I -->
+  <rect x="74" y="55" width="4" height="20" fill="#f0d880"/>
+  <rect x="72" y="55" width="8" height="4" fill="#f0d880"/>
+  <rect x="72" y="71" width="8" height="4" fill="#f0d880"/>
+  <!-- M -->
+  <rect x="84" y="55" width="4" height="20" fill="#f0d880"/>
+  <rect x="84" y="55" width="4" height="8" fill="#f0d880"/>
+  <rect x="88" y="59" width="4" height="6" fill="#f0d880"/>
+  <rect x="92" y="63" width="4" height="6" fill="#f0d880"/>
+  <rect x="96" y="59" width="4" height="6" fill="#f0d880"/>
+  <rect x="100" y="55" width="4" height="20" fill="#f0d880"/>
+  <!-- A -->
+  <rect x="148" y="55" width="4" height="20" fill="#f0d880"/>
+  <rect x="160" y="55" width="4" height="20" fill="#f0d880"/>
+  <rect x="148" y="55" width="16" height="4" fill="#f0d880"/>
+  <rect x="148" y="65" width="16" height="4" fill="#f0d880"/>
+</svg>

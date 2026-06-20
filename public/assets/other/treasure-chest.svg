@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 32" shape-rendering="crispEdges">
+  <!-- chest body -->
+  <rect x="2" y="14" width="36" height="16" fill="#5a3a10"/>
+  <rect x="3" y="15" width="34" height="14" fill="#7a5a28"/>
+  <rect x="4" y="16" width="32" height="12" fill="#8a6a38"/>
+  <!-- chest lid -->
+  <rect x="2" y="6" width="36" height="10" fill="#5a3a10"/>
+  <rect x="3" y="7" width="34" height="8" fill="#7a5a28"/>
+  <rect x="4" y="8" width="32" height="6" fill="#8a6a38"/>
+  <!-- lid top curve -->
+  <rect x="4" y="4" width="32" height="4" fill="#6a4a20"/>
+  <rect x="6" y="2" width="28" height="4" fill="#7a5a28"/>
+  <rect x="8" y="0" width="24" height="4" fill="#8a6a38"/>
+  <!-- gold straps -->
+  <rect x="2" y="13" width="36" height="3" fill="#c8a040"/>
+  <rect x="3" y="14" width="34" height="1" fill="#f0d060"/>
+  <rect x="2" y="5" width="36" height="3" fill="#c8a040"/>
+  <rect x="3" y="6" width="34" height="1" fill="#f0d060"/>
+  <!-- vertical gold straps -->
+  <rect x="10" y="6" width="4" height="22" fill="#c8a040"/>
+  <rect x="11" y="7" width="2" height="20" fill="#f0d060"/>
+  <rect x="26" y="6" width="4" height="22" fill="#c8a040"/>
+  <rect x="27" y="7" width="2" height="20" fill="#f0d060"/>
+  <!-- lock -->
+  <rect x="16" y="14" width="8" height="8" fill="#c8a040"/>
+  <rect x="17" y="15" width="6" height="6" fill="#e8c060"/>
+  <!-- keyhole -->
+  <rect x="19" y="16" width="2" height="2" fill="#5a3a10"/>
+  <rect x="18" y="18" width="4" height="2" fill="#5a3a10"/>
+  <rect x="19" y="18" width="2" height="3" fill="#5a3a10"/>
+  <!-- glow effect -->
+  <rect x="4" y="16" width="8" height="2" fill="#ffee88" opacity="0.3"/>
+  <!-- wood grain -->
+  <rect x="5" y="18" width="5" height="1" fill="#5a3a10" opacity="0.4"/>
+  <rect x="5" y="22" width="5" height="1" fill="#5a3a10" opacity="0.4"/>
+  <rect x="30" y="18" width="5" height="1" fill="#5a3a10" opacity="0.4"/>
+  <rect x="30" y="22" width="5" height="1" fill="#5a3a10" opacity="0.4"/>
+</svg>

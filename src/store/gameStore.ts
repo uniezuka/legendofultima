@@ -5,16 +5,12 @@ import type { Monster, MonsterType } from '../types/monster'
 import { createInitialGameState } from '../game/init'
 import { rollD6 } from '../game/dice'
 import { generatePaths, getPathCells, validatePathPlacement } from '../game/paths'
-import { getConnectedFriendlyPath, getReachableCells } from '../game/movement'
+import { getConnectedFriendlyPath, getReachableCells, coordKey } from '../game/movement'
 import { resolveCombat, getAttackTargets } from '../game/combat'
 import { MONSTER_TEMPLATES } from '../constants/monsters'
 import { MONSTER_CAP_PER_PLAYER, LUCK_SPEND_COST, P1_BASE_ROWS, P2_BASE_ROWS, BASE_COLS } from '../constants/board'
 
 let nextMonsterId = 1
-
-function coordKey(c: Coord) {
-  return `${c.row},${c.col}`
-}
 
 function computeMustActMonsters(
   monsters: Record<string, Monster>,
@@ -37,6 +33,7 @@ function isEnemyBase(coord: Coord, owner: PlayerId): boolean {
 
 interface GameStore extends GameState {
   startGame: () => void
+  startCampaignMatch: (aiStartingMana: number) => void
   resetGame: () => void
 
   // Phase advancement
@@ -69,6 +66,7 @@ interface GameStore extends GameState {
   defendMonster: () => void
   skipCombat: () => void
   doneMonsterActions: () => void
+  forceEndMonsterActions: () => void
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -76,14 +74,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   startGame: () => {
     const fresh = createInitialGameState()
-    set({ ...fresh, gameStarted: true })
-    // Auto-run phase 1 and 2
+    set({ ...fresh, gameStarted: true, gameMode: 'pvp', aiEnabled: false })
+    setTimeout(() => get().advancePhase(), 0)
+  },
+
+  startCampaignMatch: (aiStartingMana) => {
+    const fresh = createInitialGameState()
+    const p2 = { ...fresh.players['player2'], mana: aiStartingMana }
+    set({
+      ...fresh,
+      gameStarted: true,
+      gameMode: 'campaign',
+      aiEnabled: true,
+      players: { ...fresh.players, player2: p2 },
+    })
     setTimeout(() => get().advancePhase(), 0)
   },
 
   resetGame: () => {
-    const fresh = createInitialGameState()
-    set(fresh)
+    set(createInitialGameState())
   },
 
   advancePhase: () => {
@@ -132,21 +141,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
       }
       const nextPlayer: PlayerId = state.activePlayer === 'player1' ? 'player2' : 'player1'
-      set(s => ({
-        phase: 'generateMana',
-        activePlayer: nextPlayer,
-        turnNumber: s.turnNumber + 1,
-        monsters: updatedMonsters,
-        currentDiceRoll: null,
-        generatedPaths: [],
-        selectedPathId: null,
-        selectedPathRotation: 0,
-        selectedMonsterId: null,
-        selectedMonsterTemplateType: null,
-        inspectedMonsterId: null,
-        pendingAttackTargetId: null,
-        log: [...s.log, `--- Turn ${s.turnNumber + 1}: ${nextPlayer} ---`],
-      }))
+      set(s => {
+        const nextLog = [...s.log, `--- Turn ${s.turnNumber + 1}: ${nextPlayer} ---`]
+        return {
+          phase: 'generateMana',
+          activePlayer: nextPlayer,
+          turnNumber: s.turnNumber + 1,
+          monsters: updatedMonsters,
+          currentDiceRoll: null,
+          generatedPaths: [],
+          selectedPathId: null,
+          selectedPathRotation: 0,
+          selectedMonsterId: null,
+          selectedMonsterTemplateType: null,
+          inspectedMonsterId: null,
+          pendingAttackTargetId: null,
+          log: nextLog.length > 100 ? nextLog.slice(-100) : nextLog,
+        }
+      })
       setTimeout(() => get().advancePhase(), 0)
       return
     }
@@ -472,6 +484,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const remaining = computeMustActMonsters(state.monsters, state.board, state.activePlayer)
     if (remaining.length > 0) return
     set(s => ({ phase: 'endTurn', selectedMonsterId: null, log: [...s.log, `${s.activePlayer} done with actions`] }))
+  },
+
+  forceEndMonsterActions: () => {
+    if (get().phase !== 'monsterActions') return
+    set(s => ({ phase: 'endTurn', selectedMonsterId: null, log: [...s.log, `${s.activePlayer} ends actions early`] }))
   },
 }))
 

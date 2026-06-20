@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" shape-rendering="crispEdges">
+  <rect width="48" height="48" fill="#1a5a9a"/>
+  <!-- depth variation -->
+  <rect x="0" y="0" width="48" height="16" fill="#1a4a8a"/>
+  <rect x="0" y="16" width="48" height="16" fill="#1e60a8"/>
+  <rect x="0" y="32" width="48" height="16" fill="#1a5498"/>
+  <!-- ripples row 1 -->
+  <rect x="4" y="5" width="10" height="2" fill="#3a8ace" opacity="0.8"/>
+  <rect x="20" y="3" width="8" height="2" fill="#2e78bc" opacity="0.7"/>
+  <rect x="34" y="6" width="10" height="2" fill="#3a8ace" opacity="0.8"/>
+  <!-- ripples row 2 -->
+  <rect x="2" y="13" width="6" height="2" fill="#3a8ace" opacity="0.7"/>
+  <rect x="14" y="11" width="12" height="2" fill="#2e78bc" opacity="0.8"/>
+  <rect x="30" y="14" width="8" height="2" fill="#3a8ace" opacity="0.7"/>
+  <rect x="42" y="12" width="4" height="2" fill="#2e78bc" opacity="0.6"/>
+  <!-- ripples row 3 -->
+  <rect x="6" y="21" width="14" height="2" fill="#4a9ade" opacity="0.9"/>
+  <rect x="26" y="19" width="10" height="2" fill="#3a8ace" opacity="0.8"/>
+  <rect x="40" y="22" width="6" height="2" fill="#4a9ade" opacity="0.7"/>
+  <!-- ripples row 4 -->
+  <rect x="2" y="29" width="8" height="2" fill="#3a8ace" opacity="0.7"/>
+  <rect x="16" y="27" width="14" height="2" fill="#4a9ade" opacity="0.8"/>
+  <rect x="34" y="30" width="10" height="2" fill="#3a8ace" opacity="0.8"/>
+  <!-- ripples row 5 -->
+  <rect x="4" y="37" width="12" height="2" fill="#4a9ade" opacity="0.9"/>
+  <rect x="22" y="35" width="8" height="2" fill="#3a8ace" opacity="0.7"/>
+  <rect x="36" y="38" width="10" height="2" fill="#4a9ade" opacity="0.8"/>
+  <!-- sparkle highlights -->
+  <rect x="10" y="8" width="2" height="2" fill="#8ad0f8" opacity="0.9"/>
+  <rect x="28" y="20" width="2" height="2" fill="#8ad0f8" opacity="0.9"/>
+  <rect x="6" y="34" width="2" height="2" fill="#8ad0f8" opacity="0.9"/>
+  <rect x="40" y="40" width="2" height="2" fill="#8ad0f8" opacity="0.8"/>
+</svg>

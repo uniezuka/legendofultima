@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" shape-rendering="crispEdges">
+  <!-- path tile base -->
+  <rect width="48" height="48" fill="#1a1a1a"/>
+  <!-- path horizontal strip (straight I-piece) -->
+  <rect x="0" y="14" width="48" height="20" fill="#b8955a"/>
+  <rect x="0" y="15" width="48" height="18" fill="#c4a468"/>
+  <!-- stone block pattern -->
+  <rect x="1" y="15" width="22" height="8" fill="#c4a468"/>
+  <rect x="25" y="15" width="22" height="8" fill="#aa8450"/>
+  <rect x="1" y="25" width="14" height="7" fill="#aa8450"/>
+  <rect x="17" y="25" width="14" height="7" fill="#c4a468"/>
+  <rect x="33" y="25" width="14" height="7" fill="#aa8450"/>
+  <!-- mortar lines -->
+  <rect x="0" y="23" width="48" height="2" fill="#7a5a38"/>
+  <rect x="23" y="15" width="2" height="8" fill="#7a5a38"/>
+  <rect x="15" y="25" width="2" height="7" fill="#7a5a38"/>
+  <rect x="31" y="25" width="2" height="7" fill="#7a5a38"/>
+  <!-- edge shadow top -->
+  <rect x="0" y="14" width="48" height="2" fill="#7a5a38"/>
+  <!-- edge shadow bottom -->
+  <rect x="0" y="32" width="48" height="2" fill="#7a5a38"/>
+</svg>

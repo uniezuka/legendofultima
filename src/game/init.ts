@@ -37,6 +37,8 @@ export function createInitialBoard(): Cell[][] {
 export function createInitialGameState(): GameState {
   return {
     gameStarted: false,
+    gameMode: 'pvp',
+    aiEnabled: false,
     phase: 'generateMana',
     activePlayer: 'player1',
     turnNumber: 1,

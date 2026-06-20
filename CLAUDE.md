@@ -101,6 +101,28 @@ Deployment platform must remain interchangeable.
 
 ---
 
+# Game Modes
+
+## PvP (2-Player Local)
+
+Both players are human. No AI. Started via "2-Player Local" on the title screen.
+
+`gameMode: 'pvp'`, `aiEnabled: false`
+
+## Campaign
+
+Single-player vs AI. 10 stages of increasing difficulty. Started via "Campaign" on the title screen.
+
+`gameMode: 'campaign'`, `aiEnabled: true`
+
+Player 2 is controlled by `useAiController` (hook). The AI difficulty and starting mana are set per stage via `CAMPAIGN_STAGES` in `src/constants/campaign.ts`.
+
+`startCampaignMatch(aiStartingMana)` in gameStore sets up the campaign match — it gives player2 extra starting mana based on stage difficulty.
+
+The human player (player1) controls the left panel. The AI panel is dimmed and non-interactive during player2's turn.
+
+---
+
 # MVP Requirements
 
 ## Board
@@ -109,6 +131,7 @@ Deployment platform must remain interchangeable.
 * P1 base: single tile at row 14, col 5 (bottom center)
 * P2 base: single tile at row 0, col 5 (top center)
 * No starter path tiles — players must build from scratch each game
+* Board is vertically centered in the viewport
 
 ## UI Layout
 
@@ -155,14 +178,16 @@ This lets the player decide whether to spend luck after seeing the paths.
 
 Roll: 1d6 (one six-sided die, result 1–6).
 
+Dice are displayed as face images from `/assets/dice/dice-{1–6}.svg`.
+
 ## Paths
 
 Generate 3 random paths each turn.
 
 Each path has:
 
-* Shape (I, L, T, Cross, Corner, S — 6 shapes total)
-* Cost (1–6)
+* Shape (I, L, T, Cross, Corner, S — 6 shapes total) — all 3 shapes are always distinct
+* Cost (1–6) — all 3 costs are always distinct (ensures at most one path matches the dice roll)
 
 Path selection requires: Path Cost == Dice Roll (exact match).
 
@@ -199,7 +224,7 @@ Default state. Vulnerable. Can be selected for the 2-step action sequence.
 
 ## Defending
 
-Active shield. Shows 🛡 icon on token.
+Active shield. Shows 🛡 icon (centered overlay) + cyan DEF bar on token.
 
 Uses currentDef (shield pool) during combat — see DEF Shield below.
 
@@ -223,7 +248,10 @@ Step 2 — Combat:
 * Skip combat
 * After step 2: monster is fully done for the turn
 
-All non-summoning monsters must complete both steps before "Done Actions" is available.
+All non-summoning monsters must complete both steps before "Done Actions" is available without a confirmation dialog.
+
+If a player clicks "Done Actions" while monsters still need to act, a confirmation dialog appears listing the unacted monsters. Confirming calls `forceEndMonsterActions` which immediately advances to End Turn. `forceEndMonsterActions` is guarded — it is a no-op if the phase is not `monsterActions`.
+
 If a monster has no valid actions in a step, that step may be skipped freely.
 
 After a successful attack: attacker returns to Idle state.
@@ -333,12 +361,60 @@ Cost: 7 | HP: 15 | ATK: 8 | DEF: 5 | MOVE: 2
 
 ---
 
+# Asset System
+
+All game assets live under `public/assets/` and are served by Vite at `/assets/`.
+
+## Board Tiles (`/assets/tiles/`)
+
+| File | Used for |
+|---|---|
+| `grass.png` | Empty cells (the base terrain) |
+| `path.png` | Path tiles (+ blue/red tint overlay for ownership) |
+| `base-ally.svg` | Player 1 base tile |
+| `base-enemy.svg` | Player 2 base tile |
+
+Tile type → file is resolved by `getCellBgImage()` in `Cell.tsx`.
+Path ownership is shown via a `bg-blue-500/25` or `bg-red-500/25` overlay on top of `path.png`.
+Base tiles pulse via an animated color overlay (`animate-pulse`).
+
+## Monster Sprites (`/assets/monsters/{type}/`)
+
+Each monster type has a folder. Current sprite files used:
+
+| State | File |
+|---|---|
+| idle | `idle.png` |
+| summoning | `idle.png` (+ 💤 icon overlay) |
+| defending | `idle.png` (+ 🛡 centered overlay + cyan DEF bar) |
+
+Player 1 sprites are mirrored horizontally (`scaleX(-1)`) so both players face each other.
+Owner tint overlay (`bg-blue-500/25` / `bg-red-500/25`) distinguishes teams.
+HP bar (green/yellow/red) and DEF bar (cyan) are rendered as absolute-positioned divs at the bottom of the token.
+
+## Dice (`/assets/dice/`)
+
+Files: `dice-1.svg` through `dice-6.svg`. Shown in the Roll Dice and Place Path phases.
+
+## UI (`/assets/ui/`)
+
+| File | Used for |
+|---|---|
+| `logo.svg` | Title screen logo |
+| `title-bg.svg` | Title screen background |
+
+## PNG vs SVG preference
+
+Use PNG for repeated game-board tiles and monster sprites — browsers cache and GPU-blit PNGs efficiently. Use SVG for scalable UI elements (dice faces, icons, logo).
+
+---
+
 # Visual Indicators
 
 | Element | Indicator |
 |---|---|
 | Summoning monster | 💤 icon on token |
-| Defending monster | 🛡 icon on token + cyan DEF bar |
+| Defending monster | 🛡 centered overlay + cyan DEF bar |
 | Selected monster | White ring glow |
 | Must-act monster | Amber ring (can-act highlight) |
 | Reachable move cell | Green fill |
@@ -347,12 +423,14 @@ Cost: 7 | HP: 15 | ATK: 8 | DEF: 5 | MOVE: 2
 | Valid path placement | Yellow ghost preview |
 | Invalid path placement | Red ghost preview |
 | Summon cell | Purple fill |
+| Player 1 paths | Blue tint overlay on path tile |
+| Player 2 paths | Red tint overlay on path tile |
 
 ---
 
 # Action Log
 
-Last 5 events shown below the board.
+Last 5 events shown below the board. Capped at 100 entries in state to prevent unbounded growth.
 
 Logged events include:
 
@@ -365,6 +443,38 @@ Logged events include:
 * Combat results (damage dealt, shield chip, shield break)
 * Monster death (💀)
 * Turn transitions
+* Force-end actions (when player skips unacted monsters)
+
+---
+
+# Campaign System
+
+## Screens
+
+`src/constants/campaign.ts` — defines `CAMPAIGN_STAGES[]` (10 stages).
+
+Screen flow managed by `campaignStore`:
+
+```
+title → campaign-select → campaign-intro → game → (result overlay)
+```
+
+## Stage Definition
+
+Each stage has: `name`, `description`, `difficulty`, `aiStartingMana`, `intro`, `victoryOutro`, `defeatOutro`.
+
+## AI Controller
+
+`src/game/useAiController.ts` — React hook that drives player2's turns automatically.
+Difficulty levels: `easy` | `medium` | `hard`.
+
+`AiDriver` component in `GameScreen.tsx` mounts the hook. It renders nothing and is only mounted when `aiEnabled === true`.
+
+## Result Overlays
+
+* Campaign win → Next Stage button (if stages remain) or "Campaign Complete" message
+* Campaign loss → Retry Stage button
+* PvP win → Main Menu button
 
 ---
 
@@ -372,9 +482,9 @@ Logged events include:
 
 Priority 1 — Playable Match ✅ (complete)
 
-Priority 2 — Basic AI
+Priority 2 — Basic AI ✅ (complete)
 
-Priority 3 — Campaign
+Priority 3 — Campaign ✅ (complete)
 
 Priority 4 — Save System
 

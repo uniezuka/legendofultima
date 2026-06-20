@@ -15,16 +15,24 @@ interface Props {
   onMouseEnter?: () => void
 }
 
-const BASE_CELL_BG: Record<string, string> = {
-  empty: 'bg-gray-800 border-gray-700',
-  'path-player1': 'bg-blue-700 border-blue-600',
-  'path-player2': 'bg-red-700 border-red-600',
-  'base-player1': 'bg-blue-900 border-blue-500 animate-pulse',
-  'base-player2': 'bg-red-900 border-red-500 animate-pulse',
+function getCellBgImage(cell: CellType): string {
+  if (cell.type === 'base') {
+    return cell.owner === 'player1'
+      ? '/assets/tiles/base-ally.png'
+      : '/assets/tiles/base-enemy.png'
+  }
+  if (cell.type === 'path') return '/assets/tiles/path.png'
+  return '/assets/tiles/grass.png'
 }
 
-const TYPE_INITIALS: Record<string, string> = {
-  slime: 'Sl', goblin: 'Go', archer: 'Ar', knight: 'Kn', dragon: 'Dr',
+const PATH_TINT: Record<string, string> = {
+  'path-player1': 'bg-blue-500/25',
+  'path-player2': 'bg-red-500/25',
+}
+
+const BASE_PULSE_TINT: Record<string, string> = {
+  'base-player1': 'bg-blue-400/20',
+  'base-player2': 'bg-red-400/20',
 }
 
 export default function Cell({
@@ -36,10 +44,12 @@ export default function Cell({
     ? 'empty'
     : `${cell.type}-${cell.owner ?? 'none'}`
 
-  const bg = BASE_CELL_BG[bgKey] ?? 'bg-gray-800 border-gray-700'
+  const bgImage = getCellBgImage(cell)
+  const pathTint = PATH_TINT[bgKey] ?? ''
+  const basePulseTint = BASE_PULSE_TINT[bgKey] ?? ''
+
   const cursorClass = (highlight && highlight !== 'can-act') ? 'cursor-pointer' : 'cursor-default'
 
-  // can-act uses a ring overlay (not a fill), others use a bg overlay
   const isRingHighlight = highlight === 'can-act'
   const overlayFillClass = (!isRingHighlight && highlight)
     ? ({
@@ -64,21 +74,44 @@ export default function Cell({
 
   return (
     <div
-      className={`relative border ${bg} ${cursorClass} ${ringClass} select-none`}
-      style={{ width: 48, height: 48 }}
+      className={`relative border border-black/30 ${cursorClass} ${ringClass} select-none`}
+      style={{
+        width: 48,
+        height: 48,
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
       title={monsterLabel}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
     >
+      {/* Path owner tint */}
+      {pathTint && (
+        <div className={`absolute inset-0 ${pathTint} pointer-events-none`} />
+      )}
+
+      {/* Base tile pulse overlay */}
+      {basePulseTint && (
+        <div className={`absolute inset-0 ${basePulseTint} animate-pulse pointer-events-none`} />
+      )}
+
+      {/* Highlight overlay */}
       {overlayFillClass && (
         <div className={`absolute inset-0 ${overlayFillClass} pointer-events-none`} />
       )}
 
       {/* Ghost monster preview (summon hover) */}
       {!monster && ghostMonsterType && ghostMonsterOwner && (
-        <div className={`absolute inset-0.5 rounded flex flex-col items-center justify-center opacity-50
-          ${ghostMonsterOwner === 'player1' ? 'bg-blue-600' : 'bg-red-600'}`}>
-          <span className="text-white text-xs font-bold leading-none">{TYPE_INITIALS[ghostMonsterType] ?? '?'}</span>
+        <div className="absolute inset-0.5 rounded overflow-hidden opacity-60">
+          <img
+            src={`/assets/monsters/${ghostMonsterType}/idle.png`}
+            alt={ghostMonsterType}
+            className="w-full h-full object-contain"
+            style={ghostMonsterOwner === 'player1' ? { transform: 'scaleX(-1)' } : undefined}
+            draggable={false}
+          />
+          <div className={`absolute inset-0 ${ghostMonsterOwner === 'player1' ? 'bg-blue-500/40' : 'bg-red-500/40'} pointer-events-none`} />
         </div>
       )}
 

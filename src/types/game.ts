@@ -3,6 +3,7 @@ import type { Monster } from './monster'
 import type { PathOption } from './board'
 
 export type PlayerId = 'player1' | 'player2'
+export type GameMode = 'pvp' | 'campaign'
 
 export type TurnPhase =
   | 'generateMana'
@@ -23,6 +24,8 @@ export interface Player {
 
 export interface GameState {
   gameStarted: boolean
+  gameMode: GameMode
+  aiEnabled: boolean
   phase: TurnPhase
   activePlayer: PlayerId
   turnNumber: number

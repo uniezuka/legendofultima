@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" shape-rendering="crispEdges">
+  <!-- path tile base -->
+  <rect width="48" height="48" fill="#1a1a1a"/>
+  <!-- end-cap: one open end (bottom) with closed top/sides -->
+  <!-- path from bottom up to center -->
+  <rect x="14" y="24" width="20" height="24" fill="#b8955a"/>
+  <rect x="15" y="24" width="18" height="24" fill="#c4a468"/>
+  <!-- capped platform top -->
+  <rect x="6" y="14" width="36" height="14" fill="#b8955a"/>
+  <rect x="7" y="15" width="34" height="12" fill="#c4a468"/>
+  <!-- cap end wall -->
+  <rect x="6" y="10" width="36" height="6" fill="#7a5a38"/>
+  <rect x="8" y="11" width="32" height="4" fill="#9a7a56"/>
+  <!-- stone blocks path bottom -->
+  <rect x="16" y="26" width="7" height="10" fill="#aa8450"/>
+  <rect x="25" y="26" width="7" height="10" fill="#c4a468"/>
+  <rect x="16" y="38" width="7" height="9" fill="#c4a468"/>
+  <rect x="25" y="38" width="7" height="9" fill="#aa8450"/>
+  <!-- stone blocks platform -->
+  <rect x="8" y="16" width="14" height="5" fill="#aa8450"/>
+  <rect x="24" y="16" width="16" height="5" fill="#c4a468"/>
+  <rect x="8" y="22" width="14" height="5" fill="#c4a468"/>
+  <rect x="24" y="22" width="16" height="5" fill="#aa8450"/>
+  <!-- mortar -->
+  <rect x="13" y="24" width="2" height="24" fill="#7a5a38"/>
+  <rect x="33" y="24" width="2" height="24" fill="#7a5a38"/>
+  <rect x="6" y="26" width="36" height="2" fill="#7a5a38" opacity="0.5"/>
+  <rect x="22" y="16" width="2" height="12" fill="#7a5a38"/>
+  <!-- decorative arrow indicator pointing down (closed end) -->
+  <rect x="20" y="13" width="8" height="2" fill="#c8a040" opacity="0.7"/>
+  <rect x="22" y="11" width="4" height="2" fill="#c8a040" opacity="0.7"/>
+</svg>

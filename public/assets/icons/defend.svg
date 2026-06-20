@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">
+  <!-- shield - defend -->
+  <rect x="4" y="1" width="16" height="2" fill="#6a7aaa"/>
+  <rect x="2" y="3" width="20" height="14" fill="#7a8acc"/>
+  <rect x="3" y="2" width="18" height="14" fill="#8a9add"/>
+  <!-- inner shield -->
+  <rect x="5" y="4" width="14" height="10" fill="#9aaaee"/>
+  <rect x="6" y="5" width="12" height="8" fill="#aabbff"/>
+  <!-- cross -->
+  <rect x="11" y="3" width="2" height="14" fill="#6a7aaa"/>
+  <rect x="4" y="9" width="16" height="2" fill="#6a7aaa"/>
+  <!-- shield bottom point -->
+  <rect x="4" y="17" width="16" height="2" fill="#7a8acc"/>
+  <rect x="6" y="19" width="12" height="2" fill="#8a9add"/>
+  <rect x="8" y="21" width="8" height="2" fill="#7a8acc"/>
+  <rect x="10" y="23" width="4" height="1" fill="#6a7aaa"/>
+  <!-- highlight -->
+  <rect x="5" y="3" width="6" height="2" fill="#ccddff" opacity="0.7"/>
+  <rect x="5" y="3" width="2" height="6" fill="#ccddff" opacity="0.5"/>
+  <!-- rim -->
+  <rect x="2" y="3" width="2" height="14" fill="#5a6a99"/>
+  <rect x="20" y="3" width="2" height="14" fill="#5a6a99"/>
+  <rect x="2" y="3" width="20" height="1" fill="#8a9add"/>
+</svg>

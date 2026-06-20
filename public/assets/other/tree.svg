@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 48" shape-rendering="crispEdges">
+  <!-- shadow -->
+  <rect x="4" y="44" width="24" height="4" fill="#1a1a1a" opacity="0.3"/>
+  <!-- trunk -->
+  <rect x="12" y="30" width="8" height="16" fill="#5a3a18"/>
+  <rect x="13" y="31" width="6" height="14" fill="#7a5a28"/>
+  <!-- trunk detail -->
+  <rect x="13" y="34" width="1" height="8" fill="#6a4a20" opacity="0.6"/>
+  <rect x="17" y="36" width="1" height="6" fill="#4a2a10" opacity="0.5"/>
+  <!-- roots -->
+  <rect x="10" y="42" width="4" height="4" fill="#5a3a18"/>
+  <rect x="18" y="42" width="4" height="4" fill="#5a3a18"/>
+  <!-- canopy layer 3 (bottom, widest) -->
+  <rect x="2" y="22" width="28" height="10" fill="#2a5a20"/>
+  <rect x="4" y="20" width="24" height="12" fill="#3a6a28"/>
+  <!-- canopy layer 2 (middle) -->
+  <rect x="4" y="14" width="24" height="10" fill="#3a7030"/>
+  <rect x="6" y="12" width="20" height="12" fill="#4a8038"/>
+  <!-- canopy layer 1 (top) -->
+  <rect x="8" y="6" width="16" height="10" fill="#4a9040"/>
+  <rect x="10" y="4" width="12" height="10" fill="#5aa048"/>
+  <!-- canopy top -->
+  <rect x="12" y="0" width="8" height="6" fill="#5aaa48"/>
+  <rect x="14" y="0" width="4" height="4" fill="#6aba58"/>
+  <!-- canopy highlights -->
+  <rect x="6" y="14" width="6" height="3" fill="#6aaa55" opacity="0.6"/>
+  <rect x="4" y="22" width="5" height="3" fill="#5aaa45" opacity="0.5"/>
+  <rect x="10" y="6" width="4" height="2" fill="#7aca65" opacity="0.6"/>
+  <!-- canopy shadow -->
+  <rect x="20" y="22" width="8" height="6" fill="#1a4a15" opacity="0.4"/>
+  <rect x="20" y="14" width="6" height="6" fill="#2a5020" opacity="0.4"/>
+</svg>

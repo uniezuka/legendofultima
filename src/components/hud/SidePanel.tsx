@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useGameStore, selectReachableCells, selectAttackTargets, selectMustActMonsters } from '../../store/gameStore'
 import type { PlayerId } from '../../types/game'
 import type { MonsterType } from '../../types/monster'
@@ -63,14 +64,26 @@ export default function SidePanel({ playerId }: Props) {
   const setPendingAttackTarget = useGameStore(s => s.setPendingAttackTarget)
   const attackTarget = useGameStore(s => s.attackTarget)
   const doneMonsterActions = useGameStore(s => s.doneMonsterActions)
+  const forceEndMonsterActions = useGameStore(s => s.forceEndMonsterActions)
   const advancePhase = useGameStore(s => s.advancePhase)
+
+  const [showEndConfirm, setShowEndConfirm] = useState(false)
+
+  // Close the confirm dialog if the phase changes away from monsterActions
+  // (e.g. AI advances the turn while dialog is open)
+  useEffect(() => {
+    if (phase !== 'monsterActions') setShowEndConfirm(false)
+  }, [phase])
 
   const reachable = useGameStore(selectReachableCells)
   const attackTargets = useGameStore(selectAttackTargets)
   const mustActMonsters = useGameStore(selectMustActMonsters)
 
+  const aiEnabled = useGameStore(s => s.aiEnabled)
+
   const isP1 = playerId === 'player1'
   const isActive = activePlayer === playerId
+  const isAiControlled = aiEnabled && !isP1  // player2 in campaign mode
   const accentBorder = isP1 ? 'border-blue-600' : 'border-red-600'
   const accentBg = isP1 ? 'bg-blue-950' : 'bg-red-950'
   const accentText = isP1 ? 'text-blue-300' : 'text-red-300'
@@ -122,7 +135,7 @@ export default function SidePanel({ playerId }: Props) {
 
       {/* ── Active player controls ─────────────────────────── */}
       {isActive && (
-        <div className="flex flex-col gap-2 px-3 py-3 overflow-y-auto">
+        <div className={`flex flex-col gap-2 px-3 py-3 overflow-y-auto ${isAiControlled ? 'pointer-events-none select-none opacity-70' : ''}`}>
 
           {/* Phase 3: Roll Dice */}
           {phase === 'rollDice' && (
@@ -135,7 +148,12 @@ export default function SidePanel({ playerId }: Props) {
                 </button>
               ) : (
                 <>
-                  <span className="text-5xl font-black text-yellow-300">{diceRoll}</span>
+                  <img
+                    src={`/assets/dice/dice-${diceRoll}.svg`}
+                    alt={`Rolled: ${diceRoll}`}
+                    className="w-16 h-16 mx-auto drop-shadow-lg"
+                    draggable={false}
+                  />
                   <button onClick={advancePhase}
                     className="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded font-bold">
                     Place Path →
@@ -152,7 +170,12 @@ export default function SidePanel({ playerId }: Props) {
 
               {/* Dice result + luck adjustment */}
               <div className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1.5">
-                <span className="text-3xl font-black text-yellow-300 w-8 text-center">{diceRoll}</span>
+                <img
+                  src={`/assets/dice/dice-${diceRoll}.svg`}
+                  alt={`Roll: ${diceRoll}`}
+                  className="w-10 h-10 flex-shrink-0 drop-shadow"
+                  draggable={false}
+                />
                 <div className="flex flex-col gap-1">
                   <button onClick={() => spendLuck(1)}
                     disabled={player.luck < LUCK_SPEND_COST || (diceRoll ?? 0) >= 6}
@@ -229,9 +252,14 @@ export default function SidePanel({ playerId }: Props) {
                       ${disabled ? 'border-gray-700 bg-gray-900 opacity-40 cursor-not-allowed'
                         : isSel ? 'border-purple-400 bg-purple-900/40 ring-1 ring-purple-400 cursor-pointer'
                           : 'border-gray-600 bg-gray-800 hover:bg-gray-700 cursor-pointer'}`}>
-                    <div className={`w-7 h-7 rounded flex items-center justify-center text-xs font-bold text-white flex-shrink-0
-                      ${isP1 ? 'bg-blue-600' : 'bg-red-600'}`}>
-                      {t.label.slice(0, 2)}
+                    <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0 relative bg-gray-900">
+                      <img
+                        src={`/assets/monsters/${type}/idle.png`}
+                        alt={t.label}
+                        className="w-full h-full object-contain"
+                        draggable={false}
+                      />
+                      <div className={`absolute inset-0 ${isP1 ? 'bg-blue-500/20' : 'bg-red-500/20'} pointer-events-none`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
@@ -275,12 +303,43 @@ export default function SidePanel({ playerId }: Props) {
                 <p className="text-green-400 text-[10px]">All monsters have acted.</p>
               )}
               <button
-                onClick={doneMonsterActions}
-                disabled={mustActMonsters.length > 0}
-                className="w-full py-1.5 text-white text-sm rounded font-bold mt-auto disabled:opacity-40 disabled:cursor-not-allowed bg-green-700 hover:bg-green-600 disabled:hover:bg-green-700"
+                onClick={() => mustActMonsters.length > 0 ? setShowEndConfirm(true) : doneMonsterActions()}
+                className="w-full py-1.5 text-white text-sm rounded font-bold mt-auto bg-green-700 hover:bg-green-600"
               >
                 Done Actions →
               </button>
+
+              {/* Confirmation dialog */}
+              {showEndConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+                  <div className="bg-gray-900 border border-amber-500 rounded-lg p-5 w-72 shadow-2xl flex flex-col gap-3">
+                    <p className="text-amber-400 font-bold text-sm">Skip remaining monsters?</p>
+                    <p className="text-gray-300 text-xs">
+                      {mustActMonsters.length} monster{mustActMonsters.length > 1 ? 's have' : ' has'} not acted yet:
+                    </p>
+                    <ul className="text-amber-300 text-xs flex flex-col gap-0.5">
+                      {mustActMonsters.map(m => (
+                        <li key={m.id} className="capitalize">• {m.type}</li>
+                      ))}
+                    </ul>
+                    <p className="text-gray-400 text-[10px]">End turn anyway? Unacted monsters will forfeit their actions.</p>
+                    <div className="flex gap-2 mt-1">
+                      <button
+                        onClick={() => { setShowEndConfirm(false); forceEndMonsterActions() }}
+                        className="flex-1 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs rounded font-bold"
+                      >
+                        End Turn
+                      </button>
+                      <button
+                        onClick={() => setShowEndConfirm(false)}
+                        className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -387,9 +446,8 @@ export default function SidePanel({ playerId }: Props) {
               })()}
 
               <button
-                onClick={doneMonsterActions}
-                disabled={mustActMonsters.length > 0}
-                className="w-full py-1.5 text-white text-xs rounded font-bold mt-1 disabled:opacity-40 disabled:cursor-not-allowed bg-green-700 hover:bg-green-600 disabled:hover:bg-green-700"
+                onClick={() => mustActMonsters.length > 0 ? setShowEndConfirm(true) : doneMonsterActions()}
+                className="w-full py-1.5 text-white text-xs rounded font-bold mt-1 bg-green-700 hover:bg-green-600"
               >
                 Done Actions →
               </button>

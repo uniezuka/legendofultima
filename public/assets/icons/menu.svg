@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">
+  <!-- menu icon - styled bars -->
+  <rect x="2" y="4" width="20" height="3" fill="#ccaa44"/>
+  <rect x="3" y="5" width="18" height="1" fill="#ffdd66"/>
+  <rect x="2" y="11" width="20" height="3" fill="#ccaa44"/>
+  <rect x="3" y="12" width="18" height="1" fill="#ffdd66"/>
+  <rect x="2" y="18" width="20" height="3" fill="#ccaa44"/>
+  <rect x="3" y="19" width="18" height="1" fill="#ffdd66"/>
+</svg>

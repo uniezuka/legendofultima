@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">
+  <!-- four-leaf clover - luck -->
+  <!-- center -->
+  <rect x="10" y="10" width="4" height="4" fill="#2a8a20"/>
+  <!-- top leaf -->
+  <rect x="8" y="2" width="8" height="8" fill="#3aaa2a"/>
+  <rect x="9" y="3" width="6" height="6" fill="#4abb3a"/>
+  <rect x="10" y="4" width="4" height="4" fill="#66cc55"/>
+  <!-- bottom leaf -->
+  <rect x="8" y="14" width="8" height="8" fill="#3aaa2a"/>
+  <rect x="9" y="15" width="6" height="6" fill="#4abb3a"/>
+  <rect x="10" y="16" width="4" height="4" fill="#66cc55"/>
+  <!-- left leaf -->
+  <rect x="2" y="8" width="8" height="8" fill="#3aaa2a"/>
+  <rect x="3" y="9" width="6" height="6" fill="#4abb3a"/>
+  <rect x="4" y="10" width="4" height="4" fill="#66cc55"/>
+  <!-- right leaf -->
+  <rect x="14" y="8" width="8" height="8" fill="#3aaa2a"/>
+  <rect x="15" y="9" width="6" height="6" fill="#4abb3a"/>
+  <rect x="16" y="10" width="4" height="4" fill="#66cc55"/>
+  <!-- highlights -->
+  <rect x="9" y="4" width="2" height="2" fill="#aaff88" opacity="0.7"/>
+  <rect x="15" y="10" width="2" height="2" fill="#aaff88" opacity="0.7"/>
+  <!-- stem -->
+  <rect x="11" y="22" width="2" height="2" fill="#2a6a1a"/>
+</svg>

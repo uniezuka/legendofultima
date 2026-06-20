@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useGameStore, selectReachableCells, selectAttackTargets, selectMustActMonsters } from '../../store/gameStore'
 import type { PlayerId } from '../../types/game'
 import type { MonsterType } from '../../types/monster'

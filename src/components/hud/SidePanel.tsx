@@ -5,6 +5,7 @@ import type { MonsterType } from '../../types/monster'
 import { MONSTER_TEMPLATES, MONSTER_TYPE_ORDER } from '../../constants/monsters'
 import { LUCK_SPEND_COST } from '../../constants/board'
 import { resolveCombat } from '../../game/combat'
+import DiceFace from './DiceFace'
 
 interface Props {
   playerId: PlayerId
@@ -148,12 +149,7 @@ export default function SidePanel({ playerId }: Props) {
                 </button>
               ) : (
                 <>
-                  <img
-                    src={`/assets/dice/dice-${diceRoll}.svg`}
-                    alt={`Rolled: ${diceRoll}`}
-                    className="w-16 h-16 mx-auto drop-shadow-lg"
-                    draggable={false}
-                  />
+                  <DiceFace value={diceRoll} size={64} className="mx-auto drop-shadow-lg" />
                   <button onClick={advancePhase}
                     className="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded font-bold">
                     Place Path →
@@ -170,12 +166,7 @@ export default function SidePanel({ playerId }: Props) {
 
               {/* Dice result + luck adjustment */}
               <div className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1.5">
-                <img
-                  src={`/assets/dice/dice-${diceRoll}.svg`}
-                  alt={`Roll: ${diceRoll}`}
-                  className="w-10 h-10 flex-shrink-0 drop-shadow"
-                  draggable={false}
-                />
+                <DiceFace value={diceRoll ?? 1} size={40} className="drop-shadow" />
                 <div className="flex flex-col gap-1">
                   <button onClick={() => spendLuck(1)}
                     disabled={player.luck < LUCK_SPEND_COST || (diceRoll ?? 0) >= 6}

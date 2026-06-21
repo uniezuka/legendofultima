@@ -133,6 +133,12 @@ The human player (player1) controls the left panel. The AI panel is dimmed and n
 * No starter path tiles — players must build from scratch each game
 * Board is vertically centered in the viewport
 
+## Base HP
+
+Each player's base starts with 3 HP (`BASE_HP = 3` in `src/constants/board.ts`).
+When a monster is on the enemy base tile and attacks it, the base takes damage.
+A player loses when their base reaches 0 HP.
+
 ## UI Layout
 
 3-column flex layout:
@@ -178,7 +184,7 @@ This lets the player decide whether to spend luck after seeing the paths.
 
 Roll: 1d6 (one six-sided die, result 1–6).
 
-Dice are displayed as face images from `/assets/dice/dice-{1–6}.svg`.
+Dice are rendered by `DiceFace.tsx` — a custom component that draws pip positions as an SVG overlay on top of `/assets/dice/dice-background.png`. No pre-rendered face images are used.
 
 ## Paths
 
@@ -345,19 +351,19 @@ into enemy-colored tiles once adjacent to them.
 # Starter Monsters
 
 Slime
-Cost: 1 | HP: 8 | ATK: 2 | DEF: 4 | MOVE: 1
+Cost: 1 | HP: 8 | ATK: 2 | DEF: 4 | MOVE: 1 | Range: 1
 
 Goblin
-Cost: 2 | HP: 5 | ATK: 5 | DEF: 2 | MOVE: 2
+Cost: 2 | HP: 5 | ATK: 5 | DEF: 2 | MOVE: 2 | Range: 1
 
 Archer
 Cost: 3 | HP: 4 | ATK: 4 | DEF: 1 | MOVE: 1 | Range: 2
 
 Knight
-Cost: 4 | HP: 12 | ATK: 4 | DEF: 6 | MOVE: 1
+Cost: 4 | HP: 12 | ATK: 4 | DEF: 6 | MOVE: 1 | Range: 1
 
 Dragon
-Cost: 7 | HP: 15 | ATK: 8 | DEF: 5 | MOVE: 2
+Cost: 7 | HP: 15 | ATK: 8 | DEF: 5 | MOVE: 2 | Range: 1
 
 ---
 
@@ -371,8 +377,8 @@ All game assets live under `public/assets/` and are served by Vite at `/assets/`
 |---|---|
 | `grass.png` | Empty cells (the base terrain) |
 | `path.png` | Path tiles (+ blue/red tint overlay for ownership) |
-| `base-ally.svg` | Player 1 base tile |
-| `base-enemy.svg` | Player 2 base tile |
+| `base-ally.png` | Player 1 base tile |
+| `base-enemy.png` | Player 2 base tile |
 
 Tile type → file is resolved by `getCellBgImage()` in `Cell.tsx`.
 Path ownership is shown via a `bg-blue-500/25` or `bg-red-500/25` overlay on top of `path.png`.
@@ -394,18 +400,34 @@ HP bar (green/yellow/red) and DEF bar (cyan) are rendered as absolute-positioned
 
 ## Dice (`/assets/dice/`)
 
-Files: `dice-1.svg` through `dice-6.svg`. Shown in the Roll Dice and Place Path phases.
+| File | Used for |
+|---|---|
+| `dice-background.png` | Decorative border frame rendered behind SVG pips in `DiceFace.tsx` |
+
+`DiceFace.tsx` renders the current roll by drawing pip positions as an inline SVG overlay on top of the background frame. No per-face image files are used.
 
 ## UI (`/assets/ui/`)
 
 | File | Used for |
 |---|---|
-| `logo.svg` | Title screen logo |
-| `title-bg.svg` | Title screen background |
+| `logo.png` | Title screen logo (background transparency removed via canvas at runtime) |
+| `title-bg.svg` | Title screen gradient background |
+
+## Icons (`/assets/icons/`)
+
+SVG icons used in the HUD panels: `attack.svg`, `defend.svg`, `move.svg`, `end-turn.svg`, `mana.svg`, `luck.svg`, `hp.svg`, `dice.svg`, `cost.svg`, `menu.svg`.
+
+## Path Previews (`/assets/paths/`)
+
+SVG shape previews (`straight.svg`, `t-shape.svg`, `cross.svg`, `corner.svg`, `z-shape.svg`, `end-cap.svg`). Path shapes are logic-defined; these files are available for UI card previews.
+
+## Decorative Assets (`/assets/other/`)
+
+Unused decorative SVGs (`bush.svg`, `tree.svg`, `rock.svg`, `bridge.svg`, `banner-ally.svg`, `banner-enemy.svg`, `treasure-chest.svg`) reserved for future map/UI polish.
 
 ## PNG vs SVG preference
 
-Use PNG for repeated game-board tiles and monster sprites — browsers cache and GPU-blit PNGs efficiently. Use SVG for scalable UI elements (dice faces, icons, logo).
+Use PNG for repeated game-board tiles and monster sprites — browsers cache and GPU-blit PNGs efficiently. Use SVG for scalable UI elements (icons, title background). The dice face is rendered procedurally via `DiceFace.tsx`, not as per-value image files.
 
 ---
 
@@ -463,10 +485,18 @@ title → campaign-select → campaign-intro → game → (result overlay)
 
 Each stage has: `name`, `description`, `difficulty`, `aiStartingMana`, `intro`, `victoryOutro`, `defeatOutro`.
 
+Difficulty ramp: stages 1–2 = `idle`, 3–4 = `easy`, 5–6 = `medium`, 7–10 = `hard`.
+`aiStartingMana` ranges from 3 (stage 1) to 6 (stage 10), giving harder-stage AI more resources at game start.
+
 ## AI Controller
 
 `src/game/useAiController.ts` — React hook that drives player2's turns automatically.
-Difficulty levels: `easy` | `medium` | `hard`.
+Difficulty levels: `idle` | `easy` | `medium` | `hard`.
+
+* `idle` — essentially passive; used for tutorial stages 1–2 so the player can learn freely.
+* `easy` — acts randomly ~38% of the time; picks cheapest summon.
+* `medium` — spends luck when it unlocks a path match; picks summons by offensive power.
+* `hard` — never skips; optimizes every decision (path row score, damage/kill ratio, shield-break targeting).
 
 `AiDriver` component in `GameScreen.tsx` mounts the hook. It renders nothing and is only mounted when `aiEnabled === true`.
 

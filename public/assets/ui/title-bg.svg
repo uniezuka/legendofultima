@@ -1,130 +1,210 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" shape-rendering="crispEdges">
-  <!-- sky gradient (block style) -->
-  <rect width="400" height="300" fill="#0a0818"/>
-  <rect x="0" y="0" width="400" height="40" fill="#1a1028"/>
-  <rect x="0" y="40" width="400" height="40" fill="#22183a"/>
-  <rect x="0" y="80" width="400" height="40" fill="#2a2048"/>
-  <rect x="0" y="120" width="400" height="40" fill="#1a2a5a"/>
-  <rect x="0" y="160" width="400" height="40" fill="#0a1a3a"/>
-  <!-- stars -->
-  <rect x="20" y="8" width="2" height="2" fill="#ffffff" opacity="0.8"/>
-  <rect x="60" y="15" width="2" height="2" fill="#ffffff" opacity="0.6"/>
-  <rect x="100" y="5" width="2" height="2" fill="#ffffff" opacity="0.9"/>
-  <rect x="150" y="12" width="2" height="2" fill="#ffffff" opacity="0.7"/>
-  <rect x="200" y="6" width="2" height="2" fill="#ffffff" opacity="0.8"/>
-  <rect x="250" y="18" width="2" height="2" fill="#ffffff" opacity="0.6"/>
-  <rect x="300" y="8" width="2" height="2" fill="#ffffff" opacity="0.9"/>
-  <rect x="340" y="14" width="2" height="2" fill="#ffffff" opacity="0.7"/>
-  <rect x="380" y="5" width="2" height="2" fill="#ffffff" opacity="0.8"/>
-  <rect x="80" y="30" width="2" height="2" fill="#aaccff" opacity="0.5"/>
-  <rect x="180" y="25" width="2" height="2" fill="#aaccff" opacity="0.6"/>
-  <rect x="280" y="35" width="2" height="2" fill="#aaccff" opacity="0.5"/>
-  <rect x="360" y="22" width="2" height="2" fill="#aaccff" opacity="0.6"/>
-  <!-- moon -->
-  <rect x="340" y="10" width="24" height="24" fill="#f0e860"/>
-  <rect x="342" y="8" width="20" height="28" fill="#f0e860"/>
-  <rect x="344" y="6" width="16" height="30" fill="#f0e860"/>
-  <rect x="348" y="12" width="10" height="6" fill="#d8c840" opacity="0.4"/>
-  <!-- moon crescent cut -->
-  <rect x="350" y="10" width="16" height="24" fill="#22183a"/>
-  <rect x="352" y="8" width="14" height="28" fill="#22183a"/>
-  <!-- distant mountains -->
-  <!-- far mountain left -->
-  <rect x="0" y="140" width="60" height="60" fill="#1a2848"/>
-  <rect x="20" y="120" width="40" height="40" fill="#1e2c50"/>
-  <rect x="30" y="100" width="20" height="40" fill="#222e52"/>
-  <rect x="36" y="88" width="8" height="14" fill="#ffffff" opacity="0.3"/>
-  <!-- far mountain center-left -->
-  <rect x="80" y="150" width="80" height="50" fill="#1e2c50"/>
-  <rect x="100" y="120" width="60" height="40" fill="#222e52"/>
-  <rect x="110" y="95" width="40" height="30" fill="#263260"/>
-  <rect x="118" y="82" width="24" height="16" fill="#ffffff" opacity="0.4"/>
-  <!-- far mountain center -->
-  <rect x="180" y="130" width="80" height="70" fill="#1a2848"/>
-  <rect x="200" y="100" width="60" height="40" fill="#1e2c50"/>
-  <rect x="210" y="70" width="40" height="40" fill="#222e52"/>
-  <rect x="218" y="54" width="24" height="20" fill="#263260"/>
-  <rect x="224" y="42" width="12" height="14" fill="#ffffff" opacity="0.5"/>
-  <!-- far mountain right -->
-  <rect x="290" y="140" width="80" height="60" fill="#1e2c50"/>
-  <rect x="310" y="110" width="60" height="40" fill="#222e52"/>
-  <rect x="320" y="88" width="40" height="28" fill="#263260"/>
-  <rect x="326" y="76" width="28" height="14" fill="#ffffff" opacity="0.4"/>
-  <!-- far right -->
-  <rect x="370" y="150" width="30" height="50" fill="#1a2848"/>
-  <rect x="360" y="130" width="40" height="30" fill="#1e2c50"/>
-  <!-- midground hills (dark forest) -->
-  <rect x="0" y="190" width="400" height="30" fill="#0a2010"/>
-  <rect x="0" y="195" width="40" height="25" fill="#0e2814"/>
-  <rect x="30" y="185" width="30" height="30" fill="#122e18"/>
-  <rect x="80" y="182" width="40" height="33" fill="#0e2814"/>
-  <rect x="140" y="178" width="50" height="37" fill="#122e18"/>
-  <rect x="200" y="180" width="40" height="35" fill="#0e2814"/>
-  <rect x="260" y="175" width="50" height="40" fill="#122e18"/>
-  <rect x="330" y="182" width="40" height="33" fill="#0e2814"/>
-  <rect x="370" y="188" width="30" height="27" fill="#122e18"/>
-  <!-- tree silhouettes -->
-  <rect x="10" y="170" width="6" height="22" fill="#061608"/>
-  <rect x="7" y="158" width="12" height="14" fill="#0a2010"/>
-  <rect x="50" y="165" width="6" height="28" fill="#061608"/>
-  <rect x="47" y="150" width="12" height="18" fill="#0a2010"/>
-  <rect x="100" y="170" width="6" height="24" fill="#061608"/>
-  <rect x="97" y="155" width="12" height="18" fill="#0a2010"/>
-  <rect x="170" y="168" width="6" height="24" fill="#061608"/>
-  <rect x="167" y="152" width="12" height="18" fill="#0a2010"/>
-  <rect x="240" y="166" width="6" height="26" fill="#061608"/>
-  <rect x="237" y="150" width="12" height="18" fill="#0a2010"/>
-  <rect x="310" y="168" width="6" height="24" fill="#061608"/>
-  <rect x="307" y="153" width="12" height="18" fill="#0a2010"/>
-  <rect x="370" y="172" width="6" height="22" fill="#061608"/>
-  <rect x="367" y="158" width="12" height="16" fill="#0a2010"/>
-  <!-- foreground ground -->
-  <rect x="0" y="210" width="400" height="90" fill="#0e1a0a"/>
-  <rect x="0" y="218" width="400" height="82" fill="#121e0e"/>
-  <!-- path/road to castle -->
-  <rect x="160" y="210" width="80" height="90" fill="#2a1808"/>
-  <rect x="165" y="215" width="70" height="85" fill="#322010"/>
-  <rect x="170" y="220" width="60" height="80" fill="#3a2818"/>
-  <!-- small stones on path -->
-  <rect x="172" y="240" width="6" height="4" fill="#4a3822"/>
-  <rect x="222" y="255" width="6" height="4" fill="#4a3822"/>
-  <rect x="190" y="270" width="8" height="4" fill="#3a2818"/>
-  <!-- distant castle/tower (center) -->
-  <rect x="180" y="80" width="40" height="110" fill="#1a1a2a"/>
-  <rect x="182" y="82" width="36" height="108" fill="#22223a"/>
-  <!-- tower battlements -->
-  <rect x="180" y="78" width="40" height="6" fill="#1a1a2a"/>
-  <rect x="182" y="74" width="6" height="8" fill="#22223a"/>
-  <rect x="192" y="74" width="6" height="8" fill="#22223a"/>
-  <rect x="202" y="74" width="6" height="8" fill="#22223a"/>
-  <rect x="212" y="74" width="6" height="8" fill="#22223a"/>
-  <!-- tower windows -->
-  <rect x="186" y="100" width="8" height="12" fill="#ffee88" opacity="0.6"/>
-  <rect x="206" y="100" width="8" height="12" fill="#ffee88" opacity="0.6"/>
-  <rect x="186" y="130" width="8" height="12" fill="#ffaa44" opacity="0.5"/>
-  <rect x="206" y="130" width="8" height="12" fill="#ffaa44" opacity="0.5"/>
-  <rect x="193" y="160" width="14" height="20" fill="#ffcc44" opacity="0.6"/>
-  <!-- tower gate arch -->
-  <rect x="187" y="170" width="26" height="20" fill="#0e0e1a"/>
-  <rect x="189" y="165" width="22" height="10" fill="#0e0e1a"/>
-  <rect x="191" y="162" width="18" height="8" fill="#0e0e1a"/>
-  <!-- side towers -->
-  <rect x="150" y="110" width="24" height="80" fill="#161626"/>
-  <rect x="152" y="112" width="20" height="78" fill="#1e1e34"/>
-  <rect x="150" y="108" width="24" height="4" fill="#161626"/>
-  <rect x="152" y="104" width="4" height="8" fill="#1e1e34"/>
-  <rect x="160" y="104" width="4" height="8" fill="#1e1e34"/>
-  <rect x="168" y="104" width="4" height="8" fill="#1e1e34"/>
-  <rect x="226" y="110" width="24" height="80" fill="#161626"/>
-  <rect x="228" y="112" width="20" height="78" fill="#1e1e34"/>
-  <rect x="226" y="108" width="24" height="4" fill="#161626"/>
-  <rect x="228" y="104" width="4" height="8" fill="#1e1e34"/>
-  <rect x="236" y="104" width="4" height="8" fill="#1e1e34"/>
-  <rect x="244" y="104" width="4" height="8" fill="#1e1e34"/>
-  <!-- window lights on side towers -->
-  <rect x="157" y="125" width="6" height="8" fill="#ffee88" opacity="0.5"/>
-  <rect x="233" y="125" width="6" height="8" fill="#ffee88" opacity="0.5"/>
-  <!-- atmospheric mist -->
-  <rect x="0" y="200" width="400" height="15" fill="#1a2a4a" opacity="0.3"/>
-  <rect x="0" y="195" width="400" height="8" fill="#2a3a5a" opacity="0.2"/>
+  <!-- sky: dark indigo at top fading to warm amber at horizon -->
+  <rect width="400" height="300" fill="#060812"/>
+  <rect x="0" y="0"   width="400" height="25" fill="#080a1a"/>
+  <rect x="0" y="25"  width="400" height="25" fill="#100e2a"/>
+  <rect x="0" y="50"  width="400" height="25" fill="#1c1038"/>
+  <rect x="0" y="75"  width="400" height="20" fill="#321440"/>
+  <rect x="0" y="95"  width="400" height="20" fill="#542038"/>
+  <rect x="0" y="115" width="400" height="20" fill="#782a22"/>
+  <rect x="0" y="135" width="400" height="20" fill="#9e3c18"/>
+  <rect x="0" y="155" width="400" height="20" fill="#c05818"/>
+
+  <!-- sunrise glow at horizon -->
+  <rect x="60"  y="152" width="280" height="24" fill="#ff8030" opacity="0.12"/>
+  <rect x="120" y="158" width="160" height="18" fill="#ffaa40" opacity="0.1"/>
+
+  <!-- fading stars -->
+  <rect x="18"  y="8"  width="2" height="2" fill="#ffffff" opacity="0.55"/>
+  <rect x="55"  y="18" width="2" height="2" fill="#ffffff" opacity="0.45"/>
+  <rect x="98"  y="6"  width="2" height="2" fill="#ffffff" opacity="0.65"/>
+  <rect x="145" y="14" width="2" height="2" fill="#ffffff" opacity="0.38"/>
+  <rect x="305" y="9"  width="2" height="2" fill="#ffffff" opacity="0.48"/>
+  <rect x="350" y="5"  width="2" height="2" fill="#ffffff" opacity="0.58"/>
+  <rect x="385" y="20" width="2" height="2" fill="#ffffff" opacity="0.4"/>
+
+  <!-- setting crescent moon (pale, low) -->
+  <rect x="36"  y="82" width="20" height="20" fill="#ddd8c0" opacity="0.65"/>
+  <rect x="34"  y="84" width="24" height="16" fill="#ddd8c0" opacity="0.6"/>
+  <rect x="43"  y="80" width="16" height="24" fill="#321440"/>
+  <rect x="45"  y="78" width="14" height="28" fill="#321440"/>
+
+  <!-- sun just cresting horizon -->
+  <rect x="184" y="164" width="32" height="10" fill="#ffe050"/>
+  <rect x="180" y="167" width="40" height="8"  fill="#ffee80"/>
+  <rect x="174" y="170" width="52" height="6"  fill="#ffffa0" opacity="0.6"/>
+  <!-- sun rays -->
+  <rect x="162" y="155" width="76" height="20" fill="#ffcc30" opacity="0.08"/>
+  <rect x="145" y="148" width="110" height="28" fill="#ffaa20" opacity="0.055"/>
+
+  <!-- far background mountains: blue-purple, dawn pink on right peaks -->
+  <rect x="0"   y="150" width="68"  height="30" fill="#201c3c"/>
+  <rect x="8"   y="130" width="54"  height="28" fill="#241e44"/>
+  <rect x="18"  y="110" width="38"  height="28" fill="#28204a"/>
+  <rect x="28"  y="92"  width="24"  height="22" fill="#2c224e"/>
+  <rect x="34"  y="78"  width="14"  height="18" fill="#302650"/>
+  <rect x="38"  y="66"  width="8"   height="16" fill="#342850"/>
+  <!-- warm highlight on left mountain right peak -->
+  <rect x="44"  y="66"  width="3"   height="30" fill="#b04818" opacity="0.28"/>
+
+  <rect x="82"  y="154" width="82"  height="26" fill="#201c3c"/>
+  <rect x="92"  y="132" width="66"  height="30" fill="#241e44"/>
+  <rect x="104" y="110" width="48"  height="28" fill="#28204a"/>
+  <rect x="116" y="88"  width="30"  height="28" fill="#2c224e"/>
+  <rect x="124" y="68"  width="18"  height="24" fill="#302650"/>
+  <rect x="130" y="54"  width="10"  height="18" fill="#342852"/>
+  <rect x="134" y="42"  width="6"   height="16" fill="#362a52"/>
+  <!-- warm highlight -->
+  <rect x="138" y="42"  width="3"   height="30" fill="#b04818" opacity="0.32"/>
+
+  <rect x="282" y="152" width="80"  height="28" fill="#201c3c"/>
+  <rect x="292" y="130" width="64"  height="30" fill="#241e44"/>
+  <rect x="306" y="108" width="44"  height="30" fill="#28204a"/>
+  <rect x="318" y="86"  width="26"  height="28" fill="#2c224e"/>
+  <rect x="326" y="66"  width="16"  height="24" fill="#302650"/>
+  <rect x="332" y="52"  width="8"   height="18" fill="#342852"/>
+  <rect x="336" y="52"  width="3"   height="32" fill="#b04818" opacity="0.28"/>
+
+  <rect x="364" y="158" width="36"  height="22" fill="#201c3c"/>
+  <rect x="358" y="138" width="42"  height="26" fill="#241e44"/>
+  <rect x="356" y="120" width="44"  height="22" fill="#28204a"/>
+
+  <!-- main center hill (castle sits on top) -->
+  <rect x="142" y="155" width="116" height="25" fill="#162214"/>
+  <rect x="154" y="136" width="92"  height="26" fill="#182618"/>
+  <rect x="166" y="116" width="68"  height="26" fill="#1a2a1c"/>
+  <rect x="176" y="98"  width="48"  height="24" fill="#1c2e20"/>
+  <rect x="184" y="82"  width="32"  height="22" fill="#1e3224"/>
+  <rect x="190" y="68"  width="20"  height="18" fill="#1c2e20"/>
+
+  <!-- CASTLE on hilltop -->
+  <rect x="188" y="38"  width="24" height="32" fill="#3c3028"/>
+  <rect x="190" y="40"  width="20" height="30" fill="#4e4034"/>
+  <!-- battlements -->
+  <rect x="188" y="36"  width="24" height="4"  fill="#382c24"/>
+  <rect x="190" y="32"  width="4"  height="6"  fill="#443830"/>
+  <rect x="198" y="32"  width="4"  height="6"  fill="#443830"/>
+  <rect x="206" y="32"  width="4"  height="6"  fill="#443830"/>
+  <!-- warm dawn light in windows -->
+  <rect x="193" y="44"  width="5"  height="7"  fill="#ffd080" opacity="0.65"/>
+  <rect x="202" y="44"  width="5"  height="7"  fill="#ffd080" opacity="0.65"/>
+  <rect x="195" y="56"  width="10" height="10" fill="#d06000" opacity="0.5"/>
+  <!-- gate -->
+  <rect x="194" y="66"  width="12" height="4"  fill="#1e1810"/>
+
+  <!-- rolling grassy hills (midground) -->
+  <rect x="0"   y="178" width="400" height="30" fill="#0e1c0a"/>
+  <rect x="0"   y="182" width="65"  height="28" fill="#122010"/>
+  <rect x="42"  y="172" width="85"  height="38" fill="#142212"/>
+  <rect x="112" y="176" width="68"  height="34" fill="#122010"/>
+  <rect x="268" y="174" width="75"  height="34" fill="#142212"/>
+  <rect x="332" y="178" width="68"  height="28" fill="#122010"/>
+
+  <!-- morning valley mist -->
+  <rect x="0"   y="178" width="400" height="5"  fill="#c8b898" opacity="0.07"/>
+  <rect x="38"  y="180" width="115" height="7"  fill="#d0c0a0" opacity="0.06"/>
+  <rect x="235" y="180" width="125" height="6"  fill="#d0c0a0" opacity="0.055"/>
+
+  <!-- TREES left: mixed pine and deciduous -->
+  <!-- pine tree -->
+  <rect x="8"   y="168" width="6"  height="26" fill="#0a1408"/>
+  <rect x="5"   y="157" width="12" height="13" fill="#0c1a0a"/>
+  <rect x="7"   y="148" width="8"  height="11" fill="#0a1608"/>
+  <rect x="9"   y="141" width="4"  height="9"  fill="#0a1408"/>
+
+  <!-- deciduous (blob canopy) -->
+  <rect x="32"  y="166" width="6"  height="26" fill="#0a1608"/>
+  <rect x="26"  y="150" width="18" height="18" fill="#0e2210"/>
+  <rect x="24"  y="154" width="22" height="14" fill="#102412"/>
+  <rect x="28"  y="148" width="14" height="8"  fill="#0e2010"/>
+  <rect x="30"  y="144" width="10" height="6"  fill="#0c1e0e"/>
+
+  <!-- pine -->
+  <rect x="58"  y="162" width="6"  height="30" fill="#0a1408"/>
+  <rect x="55"  y="150" width="12" height="14" fill="#0c1a0a"/>
+  <rect x="57"  y="142" width="8"  height="10" fill="#0a1608"/>
+  <rect x="59"  y="135" width="4"  height="9"  fill="#0a1408"/>
+
+  <!-- deciduous -->
+  <rect x="82"  y="164" width="6"  height="28" fill="#0a1608"/>
+  <rect x="76"  y="148" width="18" height="18" fill="#0e2210"/>
+  <rect x="74"  y="152" width="22" height="14" fill="#102412"/>
+  <rect x="78"  y="146" width="14" height="8"  fill="#0e2010"/>
+
+  <!-- pine cluster center-left -->
+  <rect x="108" y="164" width="6"  height="28" fill="#0a1408"/>
+  <rect x="105" y="152" width="12" height="14" fill="#0c1a0a"/>
+  <rect x="107" y="144" width="8"  height="10" fill="#0a1608"/>
+  <rect x="109" y="137" width="4"  height="9"  fill="#0a1408"/>
+
+  <!-- TREES right -->
+  <rect x="264" y="163" width="6"  height="28" fill="#0a1408"/>
+  <rect x="261" y="151" width="12" height="14" fill="#0c1a0a"/>
+  <rect x="263" y="143" width="8"  height="10" fill="#0a1608"/>
+  <rect x="265" y="136" width="4"  height="9"  fill="#0a1408"/>
+
+  <rect x="290" y="161" width="6"  height="30" fill="#0a1608"/>
+  <rect x="284" y="145" width="18" height="18" fill="#0e2210"/>
+  <rect x="282" y="149" width="22" height="14" fill="#102412"/>
+  <rect x="286" y="143" width="14" height="8"  fill="#0e2010"/>
+
+  <rect x="318" y="163" width="6"  height="28" fill="#0a1408"/>
+  <rect x="315" y="151" width="12" height="14" fill="#0c1a0a"/>
+  <rect x="317" y="143" width="8"  height="10" fill="#0a1608"/>
+
+  <rect x="342" y="165" width="6"  height="26" fill="#0a1608"/>
+  <rect x="336" y="149" width="18" height="18" fill="#0e2210"/>
+  <rect x="334" y="153" width="22" height="14" fill="#102412"/>
+  <rect x="338" y="147" width="14" height="8"  fill="#0e2010"/>
+
+  <rect x="367" y="162" width="6"  height="28" fill="#0a1408"/>
+  <rect x="364" y="150" width="12" height="14" fill="#0c1a0a"/>
+  <rect x="366" y="142" width="8"  height="10" fill="#0a1608"/>
+
+  <rect x="387" y="166" width="13" height="24" fill="#0a1608"/>
+  <rect x="383" y="150" width="17" height="18" fill="#0e2210"/>
+  <rect x="381" y="154" width="19" height="12" fill="#102412"/>
+
+  <!-- GRASSLAND foreground -->
+  <rect x="0" y="210" width="400" height="90" fill="#0c1a08"/>
+  <rect x="0" y="217" width="400" height="83" fill="#0e1e0a"/>
+  <rect x="0" y="226" width="400" height="74" fill="#101e0c"/>
+
+  <!-- grass variation patches -->
+  <rect x="0"   y="213" width="75"  height="9"  fill="#122210"/>
+  <rect x="64"  y="218" width="82"  height="7"  fill="#0c1c08"/>
+  <rect x="182" y="212" width="58"  height="9"  fill="#122210"/>
+  <rect x="284" y="216" width="76"  height="7"  fill="#0c1c08"/>
+  <rect x="342" y="212" width="58"  height="9"  fill="#122210"/>
+
+  <!-- morning dew sparkles -->
+  <rect x="28"  y="220" width="2" height="2" fill="#c0dcea" opacity="0.28"/>
+  <rect x="88"  y="228" width="2" height="2" fill="#c0dcea" opacity="0.22"/>
+  <rect x="152" y="222" width="2" height="2" fill="#c0dcea" opacity="0.28"/>
+  <rect x="245" y="226" width="2" height="2" fill="#c0dcea" opacity="0.22"/>
+  <rect x="322" y="220" width="2" height="2" fill="#c0dcea" opacity="0.28"/>
+  <rect x="374" y="230" width="2" height="2" fill="#c0dcea" opacity="0.22"/>
+
+  <!-- small wildflowers -->
+  <rect x="46"  y="224" width="2" height="3" fill="#50c050" opacity="0.7"/>
+  <rect x="48"  y="222" width="3" height="2" fill="#e8c848" opacity="0.55"/>
+  <rect x="115" y="232" width="2" height="3" fill="#50c050" opacity="0.7"/>
+  <rect x="117" y="230" width="3" height="2" fill="#e84040" opacity="0.5"/>
+  <rect x="260" y="227" width="2" height="3" fill="#50c050" opacity="0.7"/>
+  <rect x="262" y="225" width="3" height="2" fill="#e8c848" opacity="0.55"/>
+  <rect x="340" y="234" width="2" height="3" fill="#50c050" opacity="0.7"/>
+  <rect x="342" y="232" width="3" height="2" fill="#e84040" opacity="0.5"/>
+
+  <!-- winding dirt path to castle -->
+  <rect x="168" y="212" width="64" height="88" fill="#3a2a18"/>
+  <rect x="174" y="218" width="52" height="82" fill="#4a3820"/>
+  <rect x="180" y="226" width="40" height="74" fill="#523e28"/>
+  <!-- path stones -->
+  <rect x="183" y="240" width="7"  height="4" fill="#604e38"/>
+  <rect x="212" y="255" width="7"  height="4" fill="#604e38"/>
+  <rect x="190" y="270" width="8"  height="4" fill="#4a3820"/>
+
+  <!-- low morning mist at base of hills -->
+  <rect x="0" y="197" width="400" height="14" fill="#c8b898" opacity="0.055"/>
+  <rect x="0" y="204" width="400" height="9"  fill="#d0c0a0" opacity="0.038"/>
 </svg>

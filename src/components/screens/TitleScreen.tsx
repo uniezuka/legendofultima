@@ -1,5 +1,41 @@
+import { useRef, useEffect } from 'react'
 import { useGameStore } from '../../store/gameStore'
 import { useCampaignStore } from '../../store/campaignStore'
+
+// Renders logo.png with its baked-in checkerboard background stripped out.
+// Pixels that are near-white AND near-neutral (r≈g≈b > 190) are made transparent.
+// This preserves gold, blue, and stone colors which all have uneven channel values.
+function LogoCanvas({ className }: { className?: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const img = new Image()
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0)
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const d = imageData.data
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i + 1], b = d[i + 2]
+        const avg = (r + g + b) / 3
+        const isNearWhite = r > 190 && g > 190 && b > 190
+        const isNeutral = Math.abs(r - avg) < 25 && Math.abs(g - avg) < 25 && Math.abs(b - avg) < 25
+        if (isNearWhite && isNeutral) {
+          // Gradually fade: fully opaque at 190, fully transparent at 255
+          d[i + 3] = Math.round(Math.max(0, 1 - (avg - 190) / 65) * 255)
+        }
+      }
+      ctx.putImageData(imageData, 0, 0)
+    }
+    img.src = '/assets/ui/logo.png'
+  }, [])
+
+  return <canvas ref={canvasRef} className={className} />
+}
 
 export default function TitleScreen() {
   const startGame = useGameStore(s => s.startGame)
@@ -20,12 +56,7 @@ export default function TitleScreen() {
       <div className="relative z-10 flex flex-col items-center gap-8">
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
-          <img
-            src="/assets/ui/logo.svg"
-            alt="Legend of Ultima"
-            className="w-96 max-w-full drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]"
-            draggable={false}
-          />
+          <LogoCanvas className="w-96 max-w-full drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]" />
           <p className="text-gray-300 text-base drop-shadow">A Tactical Path-Building Board Game</p>
         </div>
 

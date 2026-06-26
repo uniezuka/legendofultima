@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useGameStore, selectReachableCells, selectAttackTargets, selectSummonableCells, selectMustActMonsters } from '../../store/gameStore'
+import { dispatch } from '../../network/dispatch'
 import Cell, { type HighlightType } from './Cell'
 import type { Coord } from '../../types/board'
 import { BOARD_ROWS, BOARD_COLS } from '../../constants/board'
@@ -23,12 +24,10 @@ export default function Board() {
 
   const pendingAttackTargetId = useGameStore(s => s.pendingAttackTargetId)
 
-  const moveMonster = useGameStore(s => s.moveMonster)
+  // Pure UI state — always local
   const setPendingAttackTarget = useGameStore(s => s.setPendingAttackTarget)
   const selectMonster = useGameStore(s => s.selectMonster)
   const inspectMonster = useGameStore(s => s.inspectMonster)
-  const summonMonster = useGameStore(s => s.summonMonster)
-  const placePathOnBoard = useGameStore(s => s.placePathOnBoard)
 
   const [hoverCell, setHoverCell] = useState<Coord | null>(null)
 
@@ -76,12 +75,16 @@ export default function Board() {
     const cell = board[coord.row][coord.col]
 
     if (phase === 'placePath') {
-      if (ghostValid && ghostCells.length > 0) placePathOnBoard(coord)
+      if (ghostValid && ghostCells.length > 0 && selectedPathId) {
+        dispatch({ type: 'PLACE_PATH', payload: { pathId: selectedPathId, anchor: coord, rotation } })
+      }
       return
     }
 
     if (phase === 'summonMonster') {
-      if (summonSet.has(`${coord.row},${coord.col}`)) summonMonster(coord)
+      if (summonSet.has(`${coord.row},${coord.col}`) && selectedMonsterTemplateType) {
+        dispatch({ type: 'SUMMON_MONSTER', payload: { monsterType: selectedMonsterTemplateType as import('../../types/monster').MonsterType, coord } })
+      }
       return
     }
 
@@ -90,7 +93,7 @@ export default function Board() {
       const monsterId = cell.monsterId
 
       if (selectedMonsterId && inMoveStep && reachableSet.has(key) && !monsterId) {
-        moveMonster(coord)
+        dispatch({ type: 'MOVE_MONSTER', payload: { monsterId: selectedMonsterId, targetCoord: coord } })
         return
       }
       if (selectedMonsterId && inCombatStep && monsterId && attackTargets.includes(monsterId)) {

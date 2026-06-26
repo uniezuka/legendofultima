@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useGameStore } from '../../store/gameStore'
 import { useCampaignStore } from '../../store/campaignStore'
+import { useOnlineStore } from '../../store/onlineStore'
 import { useAiController } from '../../game/useAiController'
 import { CAMPAIGN_STAGES } from '../../constants/campaign'
 import type { AiDifficulty } from '../../constants/campaign'
@@ -8,6 +9,7 @@ import Board from '../board/Board'
 import TurnPhaseBar from '../hud/TurnPhaseBar'
 import SidePanel from '../hud/SidePanel'
 import MonsterInspector from '../board/MonsterInspector'
+import DisconnectOverlay from '../overlays/DisconnectOverlay'
 
 // ── AI Controller (renders nothing, drives AI turns via side effects) ────────
 function AiDriver({ difficulty }: { difficulty: AiDifficulty }) {
@@ -97,29 +99,31 @@ function CampaignResultOverlay() {
   )
 }
 
-// ── PvP Victory Overlay (original behavior) ──────────────────────────────────
-function PvpResultOverlay() {
+// ── Online Victory Overlay ────────────────────────────────────────────────────
+function OnlineResultOverlay() {
   const winner = useGameStore(s => s.winner)
   const resetGame = useGameStore(s => s.resetGame)
   const returnToTitle = useCampaignStore(s => s.returnToTitle)
+  const { myPlayerId, myNickname, opponentNickname, reset: resetOnline } = useOnlineStore()
 
   if (!winner) return null
 
-  const isP1 = winner === 'player1'
-  const bg = isP1 ? 'bg-blue-900/95' : 'bg-red-900/95'
-  const border = isP1 ? 'border-blue-400' : 'border-red-400'
-  const label = isP1 ? 'Player 1 (Blue) Wins!' : 'Player 2 (Red) Wins!'
+  const iWon = winner === myPlayerId
+  const winnerName = winner === myPlayerId ? (myNickname || 'You') : (opponentNickname || 'Opponent')
+  const bg = iWon ? 'bg-blue-900/95' : 'bg-red-900/95'
+  const border = iWon ? 'border-blue-400' : 'border-red-400'
 
   function handleMenu() {
     resetGame()
+    resetOnline()
     returnToTitle()
   }
 
   return (
     <div className="absolute inset-0 flex items-center justify-center z-50">
       <div className={`${bg} border-2 ${border} rounded-xl p-10 flex flex-col items-center gap-6 shadow-2xl`}>
-        <div className="text-5xl font-black text-yellow-400">⚔ Victory!</div>
-        <div className="text-2xl font-bold text-white">{label}</div>
+        <div className="text-5xl font-black text-yellow-400">{iWon ? '⚔ Victory!' : '💀 Defeated'}</div>
+        <div className="text-xl font-bold text-white">{winnerName} wins!</div>
         <button
           onClick={handleMenu}
           className="px-8 py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-black rounded-lg text-lg"
@@ -151,6 +155,7 @@ export default function GameScreen() {
   const gameMode = useGameStore(s => s.gameMode)
   const aiEnabled = useGameStore(s => s.aiEnabled)
   const currentStage = useCampaignStore(s => s.currentStage)
+  const { isOnline, opponentDisconnected, forfeitCountdown } = useOnlineStore()
 
   const stage = CAMPAIGN_STAGES[currentStage - 1]
   const difficulty: AiDifficulty = stage?.difficulty ?? 'easy'
@@ -176,8 +181,12 @@ export default function GameScreen() {
         {/* Right: Player 2 (Red) */}
         <SidePanel playerId="player2" />
 
-        {/* Overlay */}
-        {gameMode === 'campaign' ? <CampaignResultOverlay /> : <PvpResultOverlay />}
+        {/* Overlays */}
+        {gameMode === 'campaign' && <CampaignResultOverlay />}
+        {isOnline && <OnlineResultOverlay />}
+        {isOnline && opponentDisconnected && (
+          <DisconnectOverlay forfeitCountdown={forfeitCountdown} />
+        )}
       </div>
     </div>
   )

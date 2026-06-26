@@ -1,5 +1,4 @@
 import { useRef, useEffect } from 'react'
-import { useGameStore } from '../../store/gameStore'
 import { useCampaignStore } from '../../store/campaignStore'
 
 // Renders logo.png with its baked-in checkerboard background stripped out.
@@ -38,8 +37,9 @@ function LogoCanvas({ className }: { className?: string }) {
 }
 
 export default function TitleScreen() {
-  const startGame = useGameStore(s => s.startGame)
   const goToCampaignSelect = useCampaignStore(s => s.goToCampaignSelect)
+  const goToLobby = useCampaignStore(s => s.goToLobby)
+  const goToHelp = useCampaignStore(s => s.goToHelp)
 
   return (
     <div
@@ -72,10 +72,16 @@ export default function TitleScreen() {
             ⚔ Campaign
           </button>
           <button
-            onClick={startGame}
+            onClick={goToLobby}
             className="px-10 py-3 bg-gray-800/80 hover:bg-gray-700 text-gray-200 text-base font-bold rounded-lg transition-colors shadow w-64 border border-gray-600"
           >
-            2-Player Local
+            ⚔ Online PvP
+          </button>
+          <button
+            onClick={goToHelp}
+            className="px-10 py-2 bg-gray-900/60 hover:bg-gray-800 text-gray-400 text-sm font-semibold rounded-lg transition-colors w-64 border border-gray-700"
+          >
+            ? How to Play
           </button>
         </div>
 

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useGameStore, selectReachableCells, selectAttackTargets, selectMustActMonsters } from '../../store/gameStore'
+import { useOnlineStore } from '../../store/onlineStore'
+import { dispatch } from '../../network/dispatch'
 import type { PlayerId } from '../../types/game'
 import type { MonsterType } from '../../types/monster'
 import { MONSTER_TEMPLATES, MONSTER_TYPE_ORDER } from '../../constants/monsters'
 import { LUCK_SPEND_COST } from '../../constants/board'
 import { resolveCombat } from '../../game/combat'
 import DiceFace from './DiceFace'
+import TurnTimer from './TurnTimer'
 
 interface Props {
   playerId: PlayerId
@@ -51,22 +54,14 @@ export default function SidePanel({ playerId }: Props) {
 
   const pendingAttackTargetId = useGameStore(s => s.pendingAttackTargetId)
 
-  const rollDice = useGameStore(s => s.rollDice)
-  const spendLuck = useGameStore(s => s.spendLuck)
+  // Pure UI state — always local, never dispatched to server
   const selectPath = useGameStore(s => s.selectPath)
   const setRotation = useGameStore(s => s.setPathRotation)
-  const skipPath = useGameStore(s => s.skipPathPlacement)
   const selectTemplate = useGameStore(s => s.selectMonsterTemplate)
-  const doneSummoning = useGameStore(s => s.doneSummoning)
-  const defendMonster = useGameStore(s => s.defendMonster)
-  const skipMove = useGameStore(s => s.skipMove)
-  const skipCombat = useGameStore(s => s.skipCombat)
   const selectMonster = useGameStore(s => s.selectMonster)
   const setPendingAttackTarget = useGameStore(s => s.setPendingAttackTarget)
-  const attackTarget = useGameStore(s => s.attackTarget)
-  const doneMonsterActions = useGameStore(s => s.doneMonsterActions)
-  const forceEndMonsterActions = useGameStore(s => s.forceEndMonsterActions)
-  const advancePhase = useGameStore(s => s.advancePhase)
+
+  const { isOnline, myPlayerId, turnTimeLeft } = useOnlineStore()
 
   const [showEndConfirm, setShowEndConfirm] = useState(false)
 
@@ -84,7 +79,9 @@ export default function SidePanel({ playerId }: Props) {
 
   const isP1 = playerId === 'player1'
   const isActive = activePlayer === playerId
-  const isAiControlled = aiEnabled && !isP1  // player2 in campaign mode
+  const isAiControlled = aiEnabled && !isP1
+  // In online mode, only the local player's panel is interactive
+  const isLockedOut = isOnline && myPlayerId !== null && myPlayerId !== playerId
   const accentBorder = isP1 ? 'border-blue-600' : 'border-red-600'
   const accentBg = isP1 ? 'bg-blue-950' : 'bg-red-950'
   const accentText = isP1 ? 'text-blue-300' : 'text-red-300'
@@ -94,14 +91,19 @@ export default function SidePanel({ playerId }: Props) {
   const selectedMonster = selectedMonsterId ? monsters[selectedMonsterId] : null
   const showActionPanel = isActive && phase === 'monsterActions' && selectedMonster
 
+  const { myNickname, opponentNickname } = useOnlineStore()
+  const displayName = isOnline
+    ? (playerId === myPlayerId ? (myNickname || 'You') : (opponentNickname || 'Opponent'))
+    : (isP1 ? 'Player 1' : 'Player 2')
+
   return (
     <div className={`w-52 flex-shrink-0 flex flex-col border-r ${isP1 ? '' : 'border-l border-r-0'} ${accentBorder} ${accentBg} ${activeBg} min-h-full`}>
 
       {/* ── Player header ─────────────────────────────────── */}
       <div className={`px-3 py-2 border-b ${accentBorder}`}>
         <div className="flex items-center justify-between">
-          <span className={`font-black text-sm ${accentText}`}>
-            {isP1 ? 'Player 1' : 'Player 2'}
+          <span className={`font-black text-sm ${accentText} truncate max-w-[120px]`}>
+            {displayName}
           </span>
           {isActive && (
             <span className="text-[10px] font-bold text-yellow-300 bg-yellow-900/50 px-1.5 py-0.5 rounded">▶ TURN</span>
@@ -134,23 +136,26 @@ export default function SidePanel({ playerId }: Props) {
         </div>
       </div>
 
+      {/* ── Turn timer (online only, active player) ──────────── */}
+      {isOnline && isActive && <TurnTimer secondsLeft={turnTimeLeft} />}
+
       {/* ── Active player controls ─────────────────────────── */}
       {isActive && (
-        <div className={`flex flex-col gap-2 px-3 py-3 overflow-y-auto ${isAiControlled ? 'pointer-events-none select-none opacity-70' : ''}`}>
+        <div className={`flex flex-col gap-2 px-3 py-3 overflow-y-auto ${isAiControlled || isLockedOut ? 'pointer-events-none select-none opacity-70' : ''}`}>
 
           {/* Phase 3: Roll Dice */}
           {phase === 'rollDice' && (
             <div className="flex flex-col gap-2">
               <span className="text-gray-400 text-xs font-semibold">Roll Dice</span>
               {diceRoll === null ? (
-                <button onClick={rollDice}
+                <button onClick={() => dispatch({ type: 'ROLL_DICE' })}
                   className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-bold text-sm">
                   🎲 Roll
                 </button>
               ) : (
                 <>
                   <DiceFace value={diceRoll} size={64} className="mx-auto drop-shadow-lg" />
-                  <button onClick={advancePhase}
+                  <button onClick={() => dispatch({ type: 'ADVANCE_PHASE' })}
                     className="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded font-bold">
                     Place Path →
                   </button>
@@ -168,12 +173,12 @@ export default function SidePanel({ playerId }: Props) {
               <div className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1.5">
                 <DiceFace value={diceRoll ?? 1} size={40} className="drop-shadow" />
                 <div className="flex flex-col gap-1">
-                  <button onClick={() => spendLuck(1)}
+                  <button onClick={() => dispatch({ type: 'SPEND_LUCK', payload: { dir: 1 } })}
                     disabled={player.luck < LUCK_SPEND_COST || (diceRoll ?? 0) >= 6}
                     className="px-2 py-0.5 bg-yellow-700 hover:bg-yellow-600 disabled:opacity-40 text-white text-xs rounded leading-tight">
                     +1
                   </button>
-                  <button onClick={() => spendLuck(-1)}
+                  <button onClick={() => dispatch({ type: 'SPEND_LUCK', payload: { dir: -1 } })}
                     disabled={player.luck < LUCK_SPEND_COST || (diceRoll ?? 0) <= 1}
                     className="px-2 py-0.5 bg-yellow-700 hover:bg-yellow-600 disabled:opacity-40 text-white text-xs rounded leading-tight">
                     −1
@@ -218,7 +223,7 @@ export default function SidePanel({ playerId }: Props) {
                 <p className="text-gray-500 text-[10px] text-center">Hover board to preview • click to place</p>
               )}
 
-              <button onClick={skipPath}
+              <button onClick={() => dispatch({ type: 'SKIP_PATH' })}
                 className="w-full py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded mt-1">
                 Skip (+1 Luck)
               </button>
@@ -269,7 +274,7 @@ export default function SidePanel({ playerId }: Props) {
                 <p className="text-gray-500 text-[10px] text-center">Hover board to preview • click to place</p>
               )}
 
-              <button onClick={doneSummoning}
+              <button onClick={() => dispatch({ type: 'DONE_SUMMONING' })}
                 className="w-full py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs rounded font-bold mt-1">
                 Done Summoning →
               </button>
@@ -294,7 +299,7 @@ export default function SidePanel({ playerId }: Props) {
                 <p className="text-green-400 text-[10px]">All monsters have acted.</p>
               )}
               <button
-                onClick={() => mustActMonsters.length > 0 ? setShowEndConfirm(true) : doneMonsterActions()}
+                onClick={() => mustActMonsters.length > 0 ? setShowEndConfirm(true) : dispatch({ type: 'DONE_MONSTER_ACTIONS' })}
                 className="w-full py-1.5 text-white text-sm rounded font-bold mt-auto bg-green-700 hover:bg-green-600"
               >
                 Done Actions →
@@ -316,7 +321,7 @@ export default function SidePanel({ playerId }: Props) {
                     <p className="text-gray-400 text-[10px]">End turn anyway? Unacted monsters will forfeit their actions.</p>
                     <div className="flex gap-2 mt-1">
                       <button
-                        onClick={() => { setShowEndConfirm(false); forceEndMonsterActions() }}
+                        onClick={() => { setShowEndConfirm(false); dispatch({ type: 'FORCE_END_MONSTER_ACTIONS' }) }}
                         className="flex-1 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs rounded font-bold"
                       >
                         End Turn
@@ -356,7 +361,7 @@ export default function SidePanel({ playerId }: Props) {
                     ? <p className="text-green-400 text-[10px]">Click a green cell to move</p>
                     : <p className="text-gray-500 text-[10px]">No reachable cells</p>
                   }
-                  <button onClick={skipMove}
+                  <button onClick={() => selectedMonsterId && dispatch({ type: 'SKIP_MOVE', payload: { monsterId: selectedMonsterId } })}
                     className="w-full py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded font-bold">
                     Stay (Skip Move)
                   </button>
@@ -401,7 +406,10 @@ export default function SidePanel({ playerId }: Props) {
                         </div>
                       </div>
                       <button
-                        onClick={() => attackTarget(pendingAttackTargetId!)}
+                        onClick={() => selectedMonsterId && pendingAttackTargetId && dispatch({
+                          type: 'ATTACK_TARGET',
+                          payload: { attackerId: selectedMonsterId, targetId: pendingAttackTargetId },
+                        })}
                         className="w-full py-1.5 bg-orange-600 hover:bg-orange-500 text-white text-xs rounded font-bold"
                       >
                         Confirm Attack
@@ -423,12 +431,12 @@ export default function SidePanel({ playerId }: Props) {
                       <p className="text-orange-400 text-[10px]">Click an orange enemy to preview attack</p>
                     )}
                     {selectedMonster.lastAction !== 'defend' && (
-                      <button onClick={defendMonster}
+                      <button onClick={() => selectedMonsterId && dispatch({ type: 'DEFEND_MONSTER', payload: { monsterId: selectedMonsterId } })}
                         className="w-full py-1.5 bg-teal-700 hover:bg-teal-600 text-white text-xs rounded font-bold">
                         🛡 Defend
                       </button>
                     )}
-                    <button onClick={skipCombat}
+                    <button onClick={() => selectedMonsterId && dispatch({ type: 'SKIP_COMBAT', payload: { monsterId: selectedMonsterId } })}
                       className="w-full py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded font-bold">
                       Skip Combat
                     </button>
@@ -437,7 +445,7 @@ export default function SidePanel({ playerId }: Props) {
               })()}
 
               <button
-                onClick={() => mustActMonsters.length > 0 ? setShowEndConfirm(true) : doneMonsterActions()}
+                onClick={() => mustActMonsters.length > 0 ? setShowEndConfirm(true) : dispatch({ type: 'DONE_MONSTER_ACTIONS' })}
                 className="w-full py-1.5 text-white text-xs rounded font-bold mt-1 bg-green-700 hover:bg-green-600"
               >
                 Done Actions →
@@ -447,7 +455,7 @@ export default function SidePanel({ playerId }: Props) {
 
           {/* Phase 7: End Turn */}
           {phase === 'endTurn' && (
-            <button onClick={advancePhase}
+            <button onClick={() => dispatch({ type: 'ADVANCE_PHASE' })}
               className="w-full py-2 bg-yellow-600 hover:bg-yellow-500 text-white font-black rounded">
               End Turn →
             </button>

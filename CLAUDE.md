@@ -103,11 +103,17 @@ Deployment platform must remain interchangeable.
 
 # Game Modes
 
-## PvP (2-Player Local)
+## Online PvP
 
-Both players are human. No AI. Started via "2-Player Local" on the title screen.
+Two human players over a network. Started via "⚔ Online PvP" on the title screen → routes to `LobbyScreen`.
 
-`gameMode: 'pvp'`, `aiEnabled: false`
+`gameMode: 'pvp'`, `aiEnabled: false`, `isOnline: true` (in `onlineStore`)
+
+The server (`server/`) holds authoritative `ServerGameState`. Clients are read-only replicas. All game actions go through `dispatch()` in `src/network/dispatch.ts` → `socket.emit('action', ...)` → server applies → broadcasts `state` event → `setFromServer()` in gameStore.
+
+Turn timer: 3 minutes, server-enforced. Disconnect grace period: 60 seconds then forfeit.
+
+See `docs/MULTIPLAYER_SPEC.md` for full architecture details.
 
 ## Campaign
 
@@ -120,6 +126,14 @@ Player 2 is controlled by `useAiController` (hook). The AI difficulty and starti
 `startCampaignMatch(aiStartingMana)` in gameStore sets up the campaign match — it gives player2 extra starting mana based on stage difficulty.
 
 The human player (player1) controls the left panel. The AI panel is dimmed and non-interactive during player2's turn.
+
+## Help
+
+Static how-to-play screen. Accessed via "? How to Play" on the title screen.
+
+`src/components/screens/HelpScreen.tsx` — full screen page covering: board layout diagram, all 7 turn phases with AUTO/YOU badges, monster roster with stats, combat & defense rules, board color guide, quick tips, and game mode descriptions.
+
+Screenshot placeholder (`[ Game screenshot ]`) is present in the page — replace with `<img src="/assets/ui/screenshot.png" ... />` once the image is ready.
 
 ---
 
@@ -475,11 +489,15 @@ Logged events include:
 
 `src/constants/campaign.ts` — defines `CAMPAIGN_STAGES[]` (10 stages).
 
-Screen flow managed by `campaignStore`:
+Screen flow managed by `campaignStore` (`AppScreen` type: `'title' | 'campaign-select' | 'campaign-intro' | 'lobby' | 'help'`):
 
 ```
+title → help                                        (? How to Play button)
 title → campaign-select → campaign-intro → game → (result overlay)
+title → lobby                                       (Online PvP button)
 ```
+
+`gameStarted` flag in gameStore overrides the campaignStore screen — a live game always renders `GameScreen` regardless of `screen`.
 
 ## Stage Definition
 
@@ -508,6 +526,81 @@ Difficulty levels: `idle` | `easy` | `medium` | `hard`.
 
 ---
 
+# Network Layer (Online PvP)
+
+## Files
+
+| File | Role |
+|---|---|
+| `src/network/actions.ts` | Typed `GameAction` discriminated union — one variant per player action |
+| `src/network/socket.ts` | Socket.io singleton. `getSocket()` lazily creates the socket; `connectSocket()` / `disconnectSocket()` manage lifecycle. Attaches all server event handlers. |
+| `src/network/dispatch.ts` | Unified action entry point. Online: `emitAction()` → server. Offline (campaign / local): applies action directly to gameStore. |
+
+## Action Flow
+
+```
+Player input → dispatch(action)
+  ├── isOnline: true  → emitAction() → socket.emit('action') → server → broadcast 'state'
+  │                                                              ↓
+  │                                                    setFromServer() → gameStore
+  └── isOnline: false → gameStore method directly
+```
+
+## Key Server Events
+
+| Event | Direction | Handler |
+|---|---|---|
+| `state` | server → client | `setFromServer()` — merges server state, preserves client-only UI fields within same turn |
+| `match_start` | server → client | Sets game started, stores opponent nickname |
+| `timer` | server → client | Updates `turnTimeLeft` in onlineStore |
+| `room_created` / `room_joined` | server → client | Stores room code + player ID |
+| `opponent_disconnected` | server → client | Shows `DisconnectOverlay` with forfeit countdown |
+| `game_over` | server → client | Sets winner (forfeit case) |
+| `reconnect_room` | client → server | Sent automatically on reconnect if `lou_room_code` + `lou_session` exist in localStorage |
+
+## ServerBroadcastState
+
+`ServerBroadcastState = Omit<GameState, 'selectedPathId' | 'selectedPathRotation' | 'selectedMonsterId' | 'selectedMonsterTemplateType' | 'inspectedMonsterId' | 'pendingAttackTargetId'>`
+
+The server never touches client-only UI selection fields. `setFromServer()` in gameStore resets them on turn change, preserves them within the same turn.
+
+## onlineStore (`src/store/onlineStore.ts`)
+
+Zustand store for all online-specific state. Fields:
+
+| Field | Type | Purpose |
+|---|---|---|
+| `isOnline` | boolean | Whether the current game is networked |
+| `myPlayerId` | `PlayerId \| null` | Which seat this client occupies |
+| `myNickname` / `opponentNickname` | string | Display names |
+| `roomCode` | `string \| null` | 6-char room code |
+| `lobbyStatus` | `'idle' \| 'creating' \| 'waiting' \| 'joining'` | Lobby UI state machine |
+| `turnTimeLeft` | `number \| null` | Seconds remaining, from server timer event |
+| `opponentDisconnected` | boolean | Triggers `DisconnectOverlay` |
+| `forfeitCountdown` | `number \| null` | Seconds until opponent forfeits |
+| `connectionStatus` | `'disconnected' \| 'connecting' \| 'connected' \| 'reconnecting'` | Socket health |
+
+`reset()` clears all state and removes `lou_room_code` from localStorage (but preserves `lou_nickname`).
+
+## localStorage Keys
+
+| Key | Purpose |
+|---|---|
+| `lou_campaign_unlocked` | Highest campaign stage unlocked (integer) |
+| `lou_nickname` | Player's online display name (persists across sessions) |
+| `lou_room_code` | Current room code — used to auto-rejoin on reconnect |
+| `lou_session` | UUID session token — used for reconnect authentication |
+
+## UI Components
+
+**`TurnTimer.tsx`** — Displays the server-synced turn countdown in the SidePanel. Amber at ≤30s, red + pulse at ≤10s. Returns `null` when `secondsLeft` is null (offline modes).
+
+**`DisconnectOverlay.tsx`** — Full-screen overlay shown when `opponentDisconnected` is true. Displays a countdown to forfeit. Rendered inside `GameScreen`.
+
+**`LobbyScreen.tsx`** — Create Room / Join Room UI. Emits `create_room` or `join_room` to the server with nickname and session token. Displays the room code for the host to share. Handles the connecting → waiting state transition.
+
+---
+
 # Development Priorities
 
 Priority 1 — Playable Match ✅ (complete)
@@ -518,7 +611,7 @@ Priority 3 — Campaign ✅ (complete)
 
 Priority 4 — Save System
 
-Priority 5 — Online Multiplayer
+Priority 5 — Online Multiplayer ✅ (complete)
 
 ---
 

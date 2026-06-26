@@ -31,10 +31,22 @@ function isEnemyBase(coord: Coord, owner: PlayerId): boolean {
   return enemyBaseRows.includes(coord.row) && BASE_COLS.includes(coord.col)
 }
 
+// Server state excludes client-only UI selection fields
+export type ServerBroadcastState = Omit<
+  GameState,
+  'selectedPathId' | 'selectedPathRotation' | 'selectedMonsterId' |
+  'selectedMonsterTemplateType' | 'inspectedMonsterId' | 'pendingAttackTargetId'
+>
+
 interface GameStore extends GameState {
   startGame: () => void
   startCampaignMatch: (aiStartingMana: number) => void
   resetGame: () => void
+
+  // Online mode
+  setFromServer: (serverState: ServerBroadcastState) => void
+  setGameStarted: (started: boolean) => void
+  setWinner: (winner: PlayerId | null) => void
 
   // Phase advancement
   advancePhase: () => void
@@ -94,6 +106,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
   resetGame: () => {
     set(createInitialGameState())
   },
+
+  setFromServer: (serverState) => {
+    const current = get()
+    const turnChanged =
+      serverState.turnNumber !== current.turnNumber ||
+      serverState.activePlayer !== current.activePlayer
+
+    set({
+      ...serverState,
+      // Preserve client-only UI state within the same turn
+      selectedPathId: turnChanged ? null : current.selectedPathId,
+      selectedPathRotation: turnChanged ? 0 : current.selectedPathRotation,
+      selectedMonsterId: turnChanged ? null : current.selectedMonsterId,
+      selectedMonsterTemplateType: turnChanged ? null : current.selectedMonsterTemplateType,
+      inspectedMonsterId: turnChanged ? null : current.inspectedMonsterId,
+      pendingAttackTargetId: turnChanged ? null : current.pendingAttackTargetId,
+    })
+  },
+
+  setGameStarted: (gameStarted) => set({ gameStarted }),
+
+  setWinner: (winner) => set({ winner }),
 
   advancePhase: () => {
     const state = get()

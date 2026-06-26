@@ -11,7 +11,7 @@ function saveUnlocked(n: number) {
   try { localStorage.setItem(STORAGE_KEY, String(n)) } catch {}
 }
 
-export type AppScreen = 'title' | 'campaign-select' | 'campaign-intro'
+export type AppScreen = 'title' | 'campaign-select' | 'campaign-intro' | 'lobby' | 'help'
 
 interface CampaignStore {
   screen: AppScreen
@@ -23,6 +23,8 @@ interface CampaignStore {
   returnToTitle: () => void
   unlockNextStage: () => void
   goToNextStageIntro: () => void
+  goToLobby: () => void
+  goToHelp: () => void
 }
 
 export const useCampaignStore = create<CampaignStore>((set, get) => ({
@@ -42,6 +44,10 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
     saveUnlocked(newUnlocked)
     set({ highestUnlocked: newUnlocked })
   },
+
+  goToLobby: () => set({ screen: 'lobby' }),
+
+  goToHelp: () => set({ screen: 'help' }),
 
   goToNextStageIntro: () => {
     const { currentStage } = get()

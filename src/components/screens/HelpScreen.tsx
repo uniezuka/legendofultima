@@ -85,9 +85,9 @@ export default function HelpScreen() {
           </button>
         </div>
 
-        {/* Screenshot placeholder */}
-        <div className="w-full aspect-video bg-gray-900/80 border-2 border-dashed border-gray-600 rounded-xl flex items-center justify-center">
-          <p className="text-gray-500 text-sm">[ Game screenshot ]</p>
+        {/* Screenshot */}
+        <div className="w-full rounded-xl overflow-hidden border-2 border-gray-700">
+          <img src="/assets/screenshot.png" alt="Legend of Ultima gameplay" className="w-full h-auto" />
         </div>
 
         {/* Goal */}

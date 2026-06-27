@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: legendofultima-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: CLIENT_ORIGIN
+        value: https://legendofultima.workwithcyrose.dev
+      - key: NODE_ENV
+        value: production

@@ -84,11 +84,11 @@ Reference: `docs/MULTIPLAYER_SPEC.md`
 
 ---
 
-## Final Checks
+## Final Checks ✅
 
 - [x] Campaign mode: play a full campaign match — no regressions
-- [x] Online match: play a full match to completion (win condition) ✅
-- [ ] Online match: let timer expire — phase advances correctly
-- [ ] Online match: disconnect one player, reconnect within 60s — game resumes
+- [x] Online match: play a full match to completion (win condition)
+- [x] Online match: let timer expire — phase advances correctly
+- [x] Online match: disconnect one player, reconnect within 60s — game resumes
 - [x] Online match: disconnect one player, wait 60s — forfeit fires correctly
-- [ ] Render deploy: backend Web Service deploys and accepts socket connections
+- [x] Render deploy: backend Web Service deploys and accepts socket connections

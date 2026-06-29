@@ -1,6 +1,6 @@
 # LEGEND OF ULTIMA
 
-## Game Design Document (GDD) v0.3
+## Game Design Document (GDD) v1.0
 
 ---
 
@@ -18,14 +18,13 @@ Web Browser (Desktop First)
 
 # Game Modes
 
-MVP
+## Available
 
-* Local 2-Player (same screen, alternating turns)
+* **Campaign** — 10-stage single-player vs AI. Progressive difficulty ramp (idle → easy → medium → hard). Stages unlock as the player wins.
+* **Online PvP** — Two human players over a network via 6-character room code. Authoritative server, 3-minute turn timer, reconnect support.
 
-Future
+## Future
 
-* Single Player Campaign
-* Online PvP
 * 2v2 Battles
 * Ranked Play
 
@@ -390,42 +389,52 @@ Events logged:
 
 ---
 
-# Campaign (Future)
+# Campaign
 
 Total Stages: 10
 
-Stage 1: Tutorial
+Difficulty ramp:
+- Stages 1–2: `idle` (AI is essentially passive — tutorial pacing)
+- Stages 3–4: `easy` (~38% action rate, cheapest summon)
+- Stages 5–6: `medium` (luck-aware path selection, offensive summon priority)
+- Stages 7–10: `hard` (full optimization: path row score, damage/kill ratio, shield-break targeting)
 
-Stage 10: Final Boss
+AI starting mana scales from 3 (stage 1) to 6 (stage 10), giving harder stages a resource advantage.
+
+Stage names: The Awakening, Forest of Echoes, The Broken Bridge, Fortress of Iron, Desert of Lost Dice, Temple of the First Path, Kingdom of Shadows, Dragon's Peak, The Fallen Pathbinder, Legend of Ultima.
 
 ---
 
-# MVP Data Storage
+# Monster System
 
-The MVP runs entirely in browser memory using Zustand.
+Monster types are an open registry — `MonsterType = string`. Add a new entry to `MONSTER_TEMPLATES` in `src/constants/monsters.ts` to register a new monster. No closed union to update.
 
-No backend required for:
+All 5 starter monsters are available from the start in v1.0 (no unlock progression yet).
 
-* Local 2-player matches
-* All game rules and state
+`MonsterTemplate.skills?: string[]` is reserved for a future skill system.
 
-Database integration will be introduced later for:
+---
+
+# Data Storage
+
+Campaign and local matches run entirely in browser memory (Zustand + localStorage).
+
+Online PvP requires the Node.js server. Room state is in-memory on the server — no database needed for MVP.
+
+Database integration planned for:
 
 * Save Files
-* Campaign Progress
 * User Accounts
-* Online Multiplayer
+* Ranked Play
 
 ---
 
 # Future Features
 
-* Basic AI (next priority)
-* Single Player Campaign
 * Gold Economy
 * Monster Collection and Purchases
 * Monster Evolution
 * Additional Monsters and Abilities
 * Path Destruction
-* Online Multiplayer
+* 2v2 Battles
 * Ranked Play

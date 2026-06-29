@@ -135,6 +135,12 @@ Static how-to-play screen. Accessed via "? How to Play" on the title screen.
 
 Screenshot placeholder (`[ Game screenshot ]`) is present in the page — replace with `<img src="/assets/ui/screenshot.png" ... />` once the image is ready.
 
+## Updates
+
+Version history / roadmap screen. Accessed via "📋 Updates" on the title screen.
+
+`src/components/screens/UpdatesScreen.tsx` — shows current version, release date, and feature summary. Currently displays Version 1.0 targeting July 1, 2026.
+
 ---
 
 # MVP Requirements
@@ -362,7 +368,15 @@ into enemy-colored tiles once adjacent to them.
 
 ---
 
-# Starter Monsters
+# Monster System
+
+## Open Registry
+
+`MonsterType` is `string` — not a closed union. Add entries to `MONSTER_TEMPLATES` in `src/constants/monsters.ts` to register new monsters. No type definitions need to change.
+
+`MonsterTemplate` has an optional `skills?: string[]` field reserved for a future skill system.
+
+## Starter Monsters
 
 Slime
 Cost: 1 | HP: 8 | ATK: 2 | DEF: 4 | MOVE: 1 | Range: 1
@@ -425,7 +439,7 @@ HP bar (green/yellow/red) and DEF bar (cyan) are rendered as absolute-positioned
 | File | Used for |
 |---|---|
 | `logo.png` | Title screen logo (background transparency removed via canvas at runtime) |
-| `title-bg.svg` | Title screen gradient background |
+| `title-bg.svg` | Background used on ALL screens (TitleScreen, GameScreen, CampaignScreen, StageIntroScreen, LobbyScreen, HelpScreen, UpdatesScreen). GameScreen uses a heavier `bg-black/70` overlay; other screens use `bg-black/55`–`bg-black/60`. |
 
 ## Icons (`/assets/icons/`)
 
@@ -489,10 +503,11 @@ Logged events include:
 
 `src/constants/campaign.ts` — defines `CAMPAIGN_STAGES[]` (10 stages).
 
-Screen flow managed by `campaignStore` (`AppScreen` type: `'title' | 'campaign-select' | 'campaign-intro' | 'lobby' | 'help'`):
+Screen flow managed by `campaignStore` (`AppScreen` type: `'title' | 'campaign-select' | 'campaign-intro' | 'lobby' | 'help' | 'updates'`):
 
 ```
 title → help                                        (? How to Play button)
+title → updates                                     (📋 Updates button)
 title → campaign-select → campaign-intro → game → (result overlay)
 title → lobby                                       (Online PvP button)
 ```
@@ -528,11 +543,20 @@ Difficulty levels: `idle` | `easy` | `medium` | `hard`.
 
 # Network Layer (Online PvP)
 
+## Shared Types
+
+`shared/types.ts` — single source of truth for all types used by both frontend and server: `PlayerId`, `GameMode`, `TurnPhase`, `Player`, `Coord`, `CellType`, `Cell`, `PathShapeName`, `PathShape`, `PathOption`, `MonsterState`, `MonsterType`, `MonsterAction`, `Monster`, `GameAction`.
+
+Frontend type files (`src/types/board.ts`, `src/types/game.ts`, `src/types/monster.ts`) re-export from `shared/types.ts` and keep only their local additions (`GameState` in game.ts, `MonsterTemplate` in monster.ts).
+
+Server type file (`server/game/types.ts`) re-exports from `shared/types.ts` and keeps only `ServerGameState`.
+
 ## Files
 
 | File | Role |
 |---|---|
-| `src/network/actions.ts` | Typed `GameAction` discriminated union — one variant per player action |
+| `shared/types.ts` | Single source of truth for types shared between server and frontend |
+| `src/network/actions.ts` | `GameAction` discriminated union — re-exported from `shared/types.ts`; `monsterType` is `string` (open registry) |
 | `src/network/socket.ts` | Socket.io singleton. `getSocket()` lazily creates the socket; `connectSocket()` / `disconnectSocket()` manage lifecycle. Attaches all server event handlers. |
 | `src/network/dispatch.ts` | Unified action entry point. Online: `emitAction()` → server. Offline (campaign / local): applies action directly to gameStore. |
 
@@ -612,6 +636,14 @@ Priority 3 — Campaign ✅ (complete)
 Priority 4 — Save System
 
 Priority 5 — Online Multiplayer ✅ (complete)
+
+---
+
+# Author
+
+Junie Lorenzo — junie.lorenzo@gmail.com
+
+Credit displayed as a mailto link on the TitleScreen.
 
 ---
 

@@ -8,12 +8,9 @@ Players construct magical path networks across the battlefield, summon monsters 
 
 # Current Status
 
-**MVP Prototype — Playable**
+**Version 1.0 — Target: July 1, 2026**
 
-Version: 0.3
-
-A fully playable local 2-player prototype runs in the browser.
-No backend or authentication is required.
+Campaign mode and Online PvP are fully playable. 10-stage single-player campaign with progressive AI difficulty. Two-player online matches via room codes. No account system required.
 
 ---
 
@@ -89,12 +86,25 @@ Click any monster on the board to see its full stats in a detail panel.
 
 # Getting Started
 
+**Frontend (Vite dev server):**
+
 ```
 npm install
 npm run dev
 ```
 
 Opens at: http://localhost:5173
+
+**Server (for Online PvP):**
+
+```
+cd server && npm install
+npm run dev
+```
+
+Runs at: http://localhost:3001
+
+Both must be running for Online PvP to work locally.
 
 ---
 
@@ -106,42 +116,76 @@ Opens at: http://localhost:5173
 | Build | Vite |
 | Styling | Tailwind CSS |
 | State | Zustand |
-| Backend | None (MVP is browser-only) |
+| Server | Node.js + Express + Socket.io (Online PvP) |
+| Hosting | Render |
 
 ---
 
 # Project Structure
 
 ```
+shared/
+└── types.ts             # Single source of truth — types used by both FE and server
+
 src/
 ├── types/
-│   ├── game.ts          # GameState, Player, TurnPhase, PlayerId
-│   ├── board.ts         # Cell, Coord, PathOption, PathShape
-│   └── monster.ts       # Monster, MonsterTemplate, MonsterState, MonsterType
+│   ├── game.ts          # GameState + re-exports from shared/types
+│   ├── board.ts         # Re-exports from shared/types
+│   └── monster.ts       # MonsterTemplate (FE-only) + re-exports from shared/types
 ├── constants/
 │   ├── board.ts         # Board dimensions, base coords, mana/luck constants
-│   ├── monsters.ts      # Monster stat templates
+│   ├── monsters.ts      # Monster stat templates (open registry — MonsterType is string)
 │   └── paths.ts         # Path shape definitions (6 shapes)
 ├── game/
 │   ├── init.ts          # createInitialBoard(), createInitialGameState()
 │   ├── dice.ts          # rollD6()
 │   ├── paths.ts         # generatePaths(), getPathCells(), validatePathPlacement()
 │   ├── movement.ts      # getReachableCells(), getConnectedFriendlyPath()
-│   └── combat.ts        # resolveCombat(), getAttackTargets()
+│   ├── combat.ts        # resolveCombat(), getAttackTargets()
+│   ├── ai.ts            # AI decision functions (path, summon, move, attack)
+│   └── useAiController.ts  # React hook — drives player2 turns in campaign mode
+├── network/
+│   ├── actions.ts       # GameAction discriminated union (re-exported from shared/types)
+│   ├── dispatch.ts      # Routes actions: online → socket, offline → gameStore
+│   └── socket.ts        # Socket.io singleton + all server event handlers
 ├── store/
-│   └── gameStore.ts     # Zustand store — all game state and actions
+│   ├── gameStore.ts     # All game state and mutations; setFromServer() for online
+│   ├── campaignStore.ts # Screen routing (title/campaign/lobby/help/updates)
+│   └── onlineStore.ts   # Online-only state (isOnline, myPlayerId, timer, etc.)
 └── components/
     ├── screens/
-    │   ├── TitleScreen.tsx
-    │   └── GameScreen.tsx
+    │   ├── TitleScreen.tsx       # Main menu with author credit
+    │   ├── GameScreen.tsx        # In-game layout (sidepanels + board + log)
+    │   ├── CampaignScreen.tsx    # Stage select grid
+    │   ├── StageIntroScreen.tsx  # Pre-match story/intro
+    │   ├── LobbyScreen.tsx       # Online PvP room create/join
+    │   ├── HelpScreen.tsx        # How to play
+    │   └── UpdatesScreen.tsx     # Version history
     ├── board/
-    │   ├── Board.tsx          # 11×15 grid, click/hover handling
-    │   ├── Cell.tsx           # Individual cell with highlight states
-    │   ├── MonsterToken.tsx   # Token with HP bar, DEF bar, state icons
-    │   └── MonsterInspector.tsx # Floating detail panel on click
-    └── hud/
-        ├── SidePanel.tsx      # Per-player panel with all phase controls
-        └── TurnPhaseBar.tsx   # Phase strip + active player indicator
+    │   ├── Board.tsx             # 11×15 grid, click/hover handling
+    │   ├── Cell.tsx              # Individual cell with highlight states
+    │   ├── MonsterToken.tsx      # Token with HP bar, DEF bar, state icons
+    │   └── MonsterInspector.tsx  # Floating detail panel on click
+    ├── hud/
+    │   ├── SidePanel.tsx         # Per-player panel with all phase controls
+    │   ├── TurnPhaseBar.tsx      # Phase strip + active player indicator
+    │   ├── DiceFace.tsx          # SVG pip renderer on dice-background.png
+    │   └── TurnTimer.tsx         # Server-synced countdown (online only)
+    └── overlays/
+        └── DisconnectOverlay.tsx # Opponent disconnected + forfeit countdown
+
+server/
+├── index.ts             # Express + Socket.io setup, /health endpoint
+├── rooms.ts             # Room lifecycle, turn timer, forfeit, reconnect
+└── game/
+    ├── types.ts         # ServerGameState + re-exports from shared/types
+    ├── constants.ts     # Board/game constants (mirrored from src/constants)
+    ├── apply.ts         # applyAction() + runEndTurnAndAutoPhases() — pure functions
+    ├── combat.ts        # resolveCombat(), getAttackTargets()
+    ├── movement.ts      # getConnectedFriendlyPath(), getReachableCells()
+    ├── paths.ts         # generatePaths(startId), getPathCells(), validatePathPlacement()
+    ├── dice.ts          # rollD6()
+    └── init.ts          # createInitialMatchState() (starts at rollDice phase)
 ```
 
 ---
@@ -161,10 +205,10 @@ src/
 | Priority | Feature | Status |
 |---|---|---|
 | 1 | Playable Local Match | ✅ Complete |
-| 2 | Basic AI | Planned |
-| 3 | Campaign (10 stages) | Planned |
+| 2 | Basic AI | ✅ Complete |
+| 3 | Campaign (10 stages) | ✅ Complete |
 | 4 | Save System | Planned |
-| 5 | Online Multiplayer | Planned |
+| 5 | Online Multiplayer | ✅ Complete |
 
 ---
 

@@ -161,10 +161,14 @@ export default function GameScreen() {
   const difficulty: AiDifficulty = stage?.difficulty ?? 'easy'
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center relative">
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ backgroundImage: 'url(/assets/ui/title-bg.svg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
+    >
+      <div className="absolute inset-0 bg-black/70 pointer-events-none" />
       {aiEnabled && <AiDriver difficulty={difficulty} />}
 
-      <div className="flex flex-row relative">
+      <div className="flex flex-row relative z-10">
         {/* Left: Player 1 (Blue) */}
         <SidePanel playerId="player1" />
 

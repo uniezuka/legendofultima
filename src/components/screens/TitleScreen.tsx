@@ -40,6 +40,7 @@ export default function TitleScreen() {
   const goToCampaignSelect = useCampaignStore(s => s.goToCampaignSelect)
   const goToLobby = useCampaignStore(s => s.goToLobby)
   const goToHelp = useCampaignStore(s => s.goToHelp)
+  const goToUpdates = useCampaignStore(s => s.goToUpdates)
 
   return (
     <div
@@ -83,10 +84,27 @@ export default function TitleScreen() {
           >
             ? How to Play
           </button>
+          <button
+            onClick={goToUpdates}
+            className="px-10 py-2 bg-gray-900/60 hover:bg-gray-800 text-gray-400 text-sm font-semibold rounded-lg transition-colors w-64 border border-gray-700"
+          >
+            📋 Updates
+          </button>
         </div>
 
         <div className="text-gray-500 text-xs text-center max-w-sm drop-shadow">
           <p>Turn: Mana → Paths → Roll → Place → Summon → Actions → End</p>
+        </div>
+
+        <div className="text-gray-600 text-xs text-center drop-shadow mt-2">
+          <p>by{' '}
+            <a
+              href="mailto:junie.lorenzo@gmail.com"
+              className="text-gray-500 hover:text-gray-300 transition-colors underline underline-offset-2"
+            >
+              Junie Lorenzo
+            </a>
+          </p>
         </div>
       </div>
     </div>

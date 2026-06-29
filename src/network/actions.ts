@@ -1,5 +1,4 @@
 import type { Coord } from '../types/board'
-import type { MonsterType } from '../types/monster'
 
 export type GameAction =
   | { type: 'ROLL_DICE' }
@@ -7,7 +6,7 @@ export type GameAction =
   | { type: 'ADVANCE_PHASE' }
   | { type: 'PLACE_PATH'; payload: { pathId: string; anchor: Coord; rotation: number } }
   | { type: 'SKIP_PATH' }
-  | { type: 'SUMMON_MONSTER'; payload: { monsterType: MonsterType; coord: Coord } }
+  | { type: 'SUMMON_MONSTER'; payload: { monsterType: string; coord: Coord } }
   | { type: 'DONE_SUMMONING' }
   | { type: 'MOVE_MONSTER'; payload: { monsterId: string; targetCoord: Coord } }
   | { type: 'SKIP_MOVE'; payload: { monsterId: string } }

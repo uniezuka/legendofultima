@@ -28,8 +28,12 @@ export default function StageIntroScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center gap-8 px-6">
-      <div className="w-full max-w-lg flex flex-col gap-6">
+    <div
+      className="min-h-screen flex flex-col items-center justify-center gap-8 px-6 relative overflow-hidden"
+      style={{ backgroundImage: 'url(/assets/ui/title-bg.svg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
+    >
+      <div className="absolute inset-0 bg-black/55 pointer-events-none" />
+      <div className="relative z-10 w-full max-w-lg flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <span className="text-gray-500 text-sm font-mono">Stage {stage.id} of {CAMPAIGN_STAGES.length}</span>
@@ -44,7 +48,7 @@ export default function StageIntroScreen() {
         </div>
 
         {/* Story text */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-5">
+        <div className="bg-gray-800/90 border border-gray-700 rounded-lg p-5">
           <p className="text-gray-300 text-sm leading-relaxed">{stage.intro}</p>
         </div>
 

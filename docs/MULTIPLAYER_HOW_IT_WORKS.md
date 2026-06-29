@@ -195,18 +195,23 @@ The `isOnline` flag is the **only** branch point between online and campaign. Al
 ## Files at a Glance
 
 ```
+shared/
+  types.ts          Single source of truth — all types shared between client and server
+                    (PlayerId, Monster, GameAction, TurnPhase, etc.)
+                    Both src/types/*.ts and server/game/types.ts re-export from here.
+
 server/
   index.ts          Socket.io server setup, event wiring
   rooms.ts          Room lifecycle, turn timer, forfeit countdown, reconnect
   game/
     apply.ts        applyAction() — pure function, all 14 action handlers
     init.ts         createInitialMatchState() — first server state
-    types.ts        ServerGameState, GameAction union type
+    types.ts        ServerGameState (server-only) + re-exports from shared/types
 
 src/network/
   socket.ts         Socket singleton, all server event handlers
   dispatch.ts       The isOnline routing branch
-  actions.ts        GameAction type (14 action types)
+  actions.ts        GameAction type — re-exported from shared/types
 
 src/store/
   onlineStore.ts    isOnline, myPlayerId, timer, disconnect state

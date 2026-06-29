@@ -1,6 +1,5 @@
 import { useGameStore } from '../../store/gameStore'
 import { MONSTER_TEMPLATES, MONSTER_TYPE_ORDER } from '../../constants/monsters'
-import type { MonsterType } from '../../types/monster'
 
 export default function MonsterRoster() {
   const phase = useGameStore(s => s.phase)
@@ -20,7 +19,7 @@ export default function MonsterRoster() {
         {' '}Monsters: <span className="text-white">{monsterCount}/8</span>
       </div>
 
-      {MONSTER_TYPE_ORDER.map((type: MonsterType) => {
+      {MONSTER_TYPE_ORDER.map((type) => {
         const t = MONSTER_TEMPLATES[type]
         const canAfford = mana >= t.cost
         const atCap = monsterCount >= 8

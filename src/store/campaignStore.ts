@@ -11,7 +11,7 @@ function saveUnlocked(n: number) {
   try { localStorage.setItem(STORAGE_KEY, String(n)) } catch {}
 }
 
-export type AppScreen = 'title' | 'campaign-select' | 'campaign-intro' | 'lobby' | 'help'
+export type AppScreen = 'title' | 'campaign-select' | 'campaign-intro' | 'lobby' | 'help' | 'updates'
 
 interface CampaignStore {
   screen: AppScreen
@@ -25,6 +25,7 @@ interface CampaignStore {
   goToNextStageIntro: () => void
   goToLobby: () => void
   goToHelp: () => void
+  goToUpdates: () => void
 }
 
 export const useCampaignStore = create<CampaignStore>((set, get) => ({
@@ -48,6 +49,8 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
   goToLobby: () => set({ screen: 'lobby' }),
 
   goToHelp: () => set({ screen: 'help' }),
+
+  goToUpdates: () => set({ screen: 'updates' }),
 
   goToNextStageIntro: () => {
     const { currentStage } = get()

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { GameState, PlayerId, TurnPhase } from '../types/game'
 import type { Coord, Cell } from '../types/board'
-import type { Monster, MonsterType } from '../types/monster'
+import type { Monster } from '../types/monster'
 import { createInitialGameState } from '../game/init'
 import { rollD6 } from '../game/dice'
 import { generatePaths, getPathCells, validatePathPlacement } from '../game/paths'
@@ -62,7 +62,7 @@ interface GameStore extends GameState {
   skipPathPlacement: () => void
 
   // Phase 5
-  selectMonsterTemplate: (type: MonsterType) => void
+  selectMonsterTemplate: (type: string) => void
   summonMonster: (coord: Coord) => void
   doneSummoning: () => void
 
@@ -275,7 +275,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   summonMonster: (coord) => {
     const state = get()
     if (!state.selectedMonsterTemplateType) return
-    const template = MONSTER_TEMPLATES[state.selectedMonsterTemplateType as MonsterType]
+    const template = MONSTER_TEMPLATES[state.selectedMonsterTemplateType]
     const p = state.players[state.activePlayer]
 
     if (p.mana < template.cost) return

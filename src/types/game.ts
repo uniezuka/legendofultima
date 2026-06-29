@@ -1,26 +1,6 @@
-import type { Cell } from './board'
-import type { Monster } from './monster'
-import type { PathOption } from './board'
+import type { Cell, Monster, PathOption, PlayerId, GameMode, TurnPhase, Player } from '../../shared/types'
 
-export type PlayerId = 'player1' | 'player2'
-export type GameMode = 'pvp' | 'campaign'
-
-export type TurnPhase =
-  | 'generateMana'
-  | 'generatePaths'
-  | 'rollDice'
-  | 'placePath'
-  | 'summonMonster'
-  | 'monsterActions'
-  | 'endTurn'
-
-export interface Player {
-  id: PlayerId
-  mana: number
-  luck: number
-  baseHp: number
-  monsterCount: number
-}
+export type { PlayerId, GameMode, TurnPhase, Player } from '../../shared/types'
 
 export interface GameState {
   gameStarted: boolean
@@ -34,6 +14,7 @@ export interface GameState {
   monsters: Record<string, Monster>
   currentDiceRoll: number | null
   generatedPaths: PathOption[]
+  // UI-only selection fields — never sent to or received from the server
   selectedPathId: string | null
   selectedPathRotation: number
   selectedMonsterId: string | null

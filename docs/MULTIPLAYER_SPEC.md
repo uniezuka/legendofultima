@@ -106,7 +106,7 @@ type GameAction =
   | { type: 'ADVANCE_PHASE' }          // rollDice→placePath, endTurn→next turn
   | { type: 'PLACE_PATH';              payload: { pathId: string; anchor: Coord; rotation: number } }
   | { type: 'SKIP_PATH' }
-  | { type: 'SUMMON_MONSTER';          payload: { monsterType: MonsterType; coord: Coord } }
+  | { type: 'SUMMON_MONSTER';          payload: { monsterType: string; coord: Coord } }
   | { type: 'DONE_SUMMONING' }
   | { type: 'MOVE_MONSTER';            payload: { monsterId: string; targetCoord: Coord } }
   | { type: 'SKIP_MOVE';               payload: { monsterId: string } }
@@ -238,16 +238,20 @@ The `lobby` screen is a value in `campaignStore`'s `AppScreen` union. `goToLobby
 
 ---
 
-## Server Directory Structure
+## Directory Structure
 
 ```
+shared/
+  types.ts            — Single source of truth for all types used by both client and server
+                        (PlayerId, GameMode, TurnPhase, Player, Monster, GameAction, etc.)
+
 server/
   index.ts            — Express + Socket.io setup, event wiring, /health endpoint
   rooms.ts            — Room CRUD, match start, turn timer, forfeit countdown, reconnect
   .env                — PORT=3001, CLIENT_ORIGIN=http://localhost:5173
   .env.example        — template for deployment
   game/
-    types.ts          — ServerGameState, GameAction union, PlayerId, Monster, etc.
+    types.ts          — ServerGameState (server-only) + re-exports from shared/types
     constants.ts      — all board/game constants mirrored from client
     apply.ts          — applyAction() + runEndTurnAndAutoPhases() pure functions
     combat.ts         — resolveCombat(), getAttackTargets()
@@ -256,6 +260,8 @@ server/
     dice.ts           — rollD6()
     init.ts           — createInitialMatchState() (already past auto-phases, phase = rollDice)
 ```
+
+`server/game/types.ts` re-exports everything from `shared/types` so existing server imports remain unchanged. The shared module uses `import type` throughout — no runtime values cross the module boundary.
 
 ---
 

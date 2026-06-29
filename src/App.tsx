@@ -6,6 +6,7 @@ import CampaignScreen from './components/screens/CampaignScreen'
 import StageIntroScreen from './components/screens/StageIntroScreen'
 import LobbyScreen from './components/screens/LobbyScreen'
 import HelpScreen from './components/screens/HelpScreen'
+import UpdatesScreen from './components/screens/UpdatesScreen'
 
 export default function App() {
   const gameStarted = useGameStore(s => s.gameStarted)
@@ -16,5 +17,6 @@ export default function App() {
   if (screen === 'campaign-select') return <CampaignScreen />
   if (screen === 'campaign-intro') return <StageIntroScreen />
   if (screen === 'help') return <HelpScreen />
+  if (screen === 'updates') return <UpdatesScreen />
   return <TitleScreen />
 }

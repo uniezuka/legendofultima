@@ -1,5 +1,5 @@
 import type { GameState } from '../types/game'
-import type { Monster, MonsterType, MonsterTemplate } from '../types/monster'
+import type { Monster, MonsterTemplate } from '../types/monster'
 import type { Coord } from '../types/board'
 import type { AiDifficulty } from '../constants/campaign'
 import { getPathCells, validatePathPlacement } from './paths'
@@ -89,7 +89,7 @@ export function computeLuckAdjustment(state: GameState): 1 | -1 | null {
 export function computeBestSummon(
   state: GameState,
   difficulty: AiDifficulty,
-): { type: MonsterType; coord: Coord } | null {
+): { type: string; coord: Coord } | null {
   const p = state.players['player2']
   if (p.monsterCount >= MONSTER_CAP_PER_PLAYER) return null
 
@@ -130,7 +130,7 @@ export function computeBestSummon(
   // Place at highest row (frontmost toward enemy)
   candidates.sort((a, b) => b.row - a.row)
 
-  return { type: template.type as MonsterType, coord: candidates[0] }
+  return { type: template.type, coord: candidates[0] }
 }
 
 // --- Monster Movement ---

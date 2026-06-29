@@ -83,7 +83,7 @@ export default function Board() {
 
     if (phase === 'summonMonster') {
       if (summonSet.has(`${coord.row},${coord.col}`) && selectedMonsterTemplateType) {
-        dispatch({ type: 'SUMMON_MONSTER', payload: { monsterType: selectedMonsterTemplateType as import('../../types/monster').MonsterType, coord } })
+        dispatch({ type: 'SUMMON_MONSTER', payload: { monsterType: selectedMonsterTemplateType, coord } })
       }
       return
     }

@@ -3,7 +3,6 @@ import { useGameStore, selectReachableCells, selectAttackTargets, selectMustActM
 import { useOnlineStore } from '../../store/onlineStore'
 import { dispatch } from '../../network/dispatch'
 import type { PlayerId } from '../../types/game'
-import type { MonsterType } from '../../types/monster'
 import { MONSTER_TEMPLATES, MONSTER_TYPE_ORDER } from '../../constants/monsters'
 import { LUCK_SPEND_COST } from '../../constants/board'
 import { resolveCombat } from '../../game/combat'
@@ -235,7 +234,7 @@ export default function SidePanel({ playerId }: Props) {
             <div className="flex flex-col gap-1.5">
               <span className="text-gray-400 text-xs font-semibold">Summon Monster</span>
 
-              {MONSTER_TYPE_ORDER.map((type: MonsterType) => {
+              {MONSTER_TYPE_ORDER.map((type) => {
                 const t = MONSTER_TEMPLATES[type]
                 const canAfford = player.mana >= t.cost
                 const atCap = player.monsterCount >= 8

@@ -286,5 +286,5 @@ Server allows `CLIENT_ORIGIN` only, on both Express and the Socket.io instance.
 
 ## Deployment (Render)
 
-- **Backend**: Render Web Service — `cd server && npm install && npm run build` build command, `node dist/index.js` start command. Set `PORT` and `CLIENT_ORIGIN` as env vars.
+- **Backend**: Render Web Service — `cd server && npm install && npm run build` build command, `node dist/server/index.js` start command. Set `PORT` and `CLIENT_ORIGIN` as env vars.
 - **Frontend**: Render Static Site — `npm run build`, publish `dist/`. Set `VITE_SERVER_URL` to backend service URL before building.

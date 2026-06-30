@@ -93,7 +93,7 @@ export default function SidePanel({ playerId }: Props) {
   const { myNickname, opponentNickname } = useOnlineStore()
   const displayName = isOnline
     ? (playerId === myPlayerId ? (myNickname || 'You') : (opponentNickname || 'Opponent'))
-    : (isP1 ? 'Player 1' : 'Player 2')
+    : (aiEnabled ? (isP1 ? 'Player' : 'Enemy') : (isP1 ? 'Player 1' : 'Player 2'))
 
   return (
     <div className={`w-52 flex-shrink-0 flex flex-col border-r ${isP1 ? '' : 'border-l border-r-0'} ${accentBorder} ${accentBg} ${activeBg} min-h-full`}>

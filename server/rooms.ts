@@ -8,6 +8,7 @@ interface PlayerInfo {
   sessionToken: string
   nickname: string
   playerId: PlayerId
+  userId?: string
 }
 
 interface Room {
@@ -116,6 +117,12 @@ export function handleCreateRoom(
   socket: Socket,
   { nickname, sessionToken }: { nickname: string; sessionToken: string },
 ) {
+  // Authenticated identity (set by the io.use handshake middleware) is
+  // authoritative when present; client-supplied nickname is only a
+  // fallback while REQUIRE_SOCKET_AUTH is not yet enforced.
+  const displayName = (socket.data.displayName as string | undefined) ?? nickname
+  const userId = socket.data.userId as string | undefined
+
   const code = makeRoomCode()
   const room: Room = {
     code,
@@ -128,7 +135,7 @@ export function handleCreateRoom(
     disconnectIntervals: {},
     inactiveHandle: null,
   }
-  room.players['player1'] = { socketId: socket.id, sessionToken, nickname, playerId: 'player1' }
+  room.players['player1'] = { socketId: socket.id, sessionToken, nickname: displayName, playerId: 'player1', userId }
   rooms.set(code, room)
   sessions.set(sessionToken, { roomCode: code, playerId: 'player1' })
   socket.join(code)
@@ -140,13 +147,16 @@ export function handleJoinRoom(
   socket: Socket,
   { roomCode, nickname, sessionToken }: { roomCode: string; nickname: string; sessionToken: string },
 ) {
+  const displayName = (socket.data.displayName as string | undefined) ?? nickname
+  const userId = socket.data.userId as string | undefined
+
   const code = roomCode.toUpperCase()
   const room = rooms.get(code)
   if (!room) { socket.emit('room_error', { message: 'Room not found.' }); return }
   if (room.players['player2']) { socket.emit('room_error', { message: 'Room is full.' }); return }
   if (room.inactiveHandle) { socket.emit('room_error', { message: 'Game has ended.' }); return }
 
-  room.players['player2'] = { socketId: socket.id, sessionToken, nickname, playerId: 'player2' }
+  room.players['player2'] = { socketId: socket.id, sessionToken, nickname: displayName, playerId: 'player2', userId }
   sessions.set(sessionToken, { roomCode: code, playerId: 'player2' })
   socket.join(code)
   socket.emit('room_joined', { roomCode: code, playerId: 'player2' })
@@ -190,6 +200,17 @@ export function handleAction(
   if (action.type === 'ADVANCE_PHASE' && room.state.phase === 'rollDice') {
     startTurnTimer(io, room)
   }
+}
+
+export function handleQuit(io: Server, socket: Socket) {
+  const room = findRoomForSocket(socket.id)
+  if (!room || !room.state || room.state.winner) return
+  const playerId = findPlayerForSocket(room, socket.id)
+  if (!playerId) return
+  if (room.state.activePlayer !== playerId) return  // only the active player may quit, mirrors applyAction's turn gate
+
+  const opponent: PlayerId = playerId === 'player1' ? 'player2' : 'player1'
+  emitGameOver(io, room, opponent, 'forfeit')
 }
 
 export function handleDisconnect(io: Server, socket: Socket) {

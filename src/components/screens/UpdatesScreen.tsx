@@ -28,9 +28,9 @@ export default function UpdatesScreen() {
         </div>
 
         <div className="w-full max-w-sm rounded-xl border-2 border-yellow-600/50 bg-yellow-950/40 px-8 py-8 flex flex-col items-center gap-3 text-center">
-          <p className="text-yellow-300 text-2xl font-black">Alpha v0.1.0</p>
-          <p className="text-gray-400 text-sm">July 1, 2026</p>
-          <p className="text-gray-500 text-sm mt-2">Full campaign · Online PvP · Save system</p>
+          <p className="text-yellow-300 text-2xl font-black">Alpha v0.2.0</p>
+          <p className="text-gray-400 text-sm">July 10, 2026</p>
+          <p className="text-gray-500 text-sm mt-2">Accounts & login · Saved campaign progress</p>
         </div>
 
       </div>

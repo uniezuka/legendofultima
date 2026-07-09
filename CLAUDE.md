@@ -1,5 +1,13 @@
 # Legend of Ultima - Claude Development Guide
 
+# Current Version
+
+**0.2.0** (Alpha) — authoritative source: the `version` field in `package.json`, mirrored in `server/package.json`. Bump both together when releasing.
+
+Bumped from 0.1.0 → 0.2.0 for the account authentication system and Postgres-backed campaign progress saving (see `docs/AUTH_SPEC.md`) — a minor bump per semver's pre-1.0 convention (new backwards-compatible functionality, not just a fix).
+
+---
+
 ## Project Goal
 
 Build a playable MVP for Legend of Ultima.
@@ -25,16 +33,21 @@ A playable prototype is more important than feature completeness.
 
 * Zustand
 
-## Backend (Future — Not Active in MVP)
+## Backend
 
 * Node.js
 * Express
+* Socket.io (Online PvP, authoritative game state)
 * Prisma
-* PostgreSQL
+* PostgreSQL (accounts, campaign progress)
 
-The MVP runs entirely in the browser with no backend.
-All game state lives in Zustand.
-Do not add backend systems until explicitly requested.
+The backend is active: `server/` runs an Express + Socket.io process backed by
+Postgres via Prisma. Authentication gates the entire app (see
+`docs/AUTH_SPEC.md`) and campaign progress is stored per-account in Postgres
+instead of localStorage. Live game state during a match still lives in
+Zustand on the client, replicated from the server's authoritative state —
+that part of the architecture is unchanged.
+Do not add further backend systems beyond auth/campaign-progress until explicitly requested.
 
 ---
 
@@ -64,15 +77,22 @@ Primary Development Target:
 
 Local Machine
 
-Commands:
+Setup (first time):
 
 npm install
+cd server && npm install
+Point `server/.env`'s `DATABASE_URL` at a local Postgres instance, then:
+cd server && npx prisma migrate dev
 
-npm run dev
+Commands:
+
+npm run dev:all   — runs the Vite frontend and the Express/Socket.io server together (recommended)
+npm run dev       — frontend only
+npm run dev:server — server only
 
 Development URL:
 
-http://localhost:5173
+http://localhost:5173 (frontend) — talks to the server on http://localhost:3001 via `VITE_SERVER_URL`
 
 Build:
 
@@ -113,6 +133,8 @@ The server (`server/`) holds authoritative `ServerGameState`. Clients are read-o
 
 Turn timer: 3 minutes, server-enforced. Disconnect grace period: 60 seconds then forfeit.
 
+Either player can forfeit early via the Quit button in `TurnPhaseBar.tsx` — but only on their own turn (`myPlayerId === activePlayer`); the button is hidden otherwise, and the server independently enforces the same rule in `handleQuit()`. Quitting emits `quit_room`, which the server resolves through the same `game_over { reason: 'forfeit' }` path used for disconnect-forfeit, declaring the opponent the winner immediately.
+
 See `docs/MULTIPLAYER_SPEC.md` for full architecture details.
 
 ## Campaign
@@ -127,6 +149,8 @@ Player 2 is controlled by `useAiController` (hook). The AI difficulty and starti
 
 The human player (player1) controls the left panel. The AI panel is dimmed and non-interactive during player2's turn.
 
+The Quit button (`TurnPhaseBar.tsx`) is always available in campaign mode (no opponent to protect against off-turn quitting). Confirming resets the game and returns to the title screen — no loss is recorded against campaign progress.
+
 ## Help
 
 Static how-to-play screen. Accessed via "? How to Play" on the title screen.
@@ -139,7 +163,7 @@ Screenshot placeholder (`[ Game screenshot ]`) is present in the page — replac
 
 Version history / roadmap screen. Accessed via "📋 Updates" on the title screen.
 
-`src/components/screens/UpdatesScreen.tsx` — shows current version, release date, and feature summary. Currently displays Version 1.0 targeting July 1, 2026.
+`src/components/screens/UpdatesScreen.tsx` — shows current version, release date, and feature summary. See "Current Version" below for the authoritative version number.
 
 ---
 
@@ -158,6 +182,8 @@ Version history / roadmap screen. Accessed via "📋 Updates" on the title scree
 Each player's base starts with 3 HP (`BASE_HP = 3` in `src/constants/board.ts`).
 When a monster is on the enemy base tile and attacks it, the base takes damage.
 A player loses when their base reaches 0 HP.
+
+A successful base hit plays an orange flash + 🔥 burst on the base tile — see `BoardEffects.tsx` under Combat.
 
 ## UI Layout
 
@@ -278,6 +304,8 @@ All non-summoning monsters must complete both steps before "Done Actions" is ava
 
 If a player clicks "Done Actions" while monsters still need to act, a confirmation dialog appears listing the unacted monsters. Confirming calls `forceEndMonsterActions` which immediately advances to End Turn. `forceEndMonsterActions` is guarded — it is a no-op if the phase is not `monsterActions`.
 
+`SidePanel.tsx` has two different "Done Actions" buttons — one in the general Monster Actions summary view, one in the per-monster action panel shown while a monster is selected — and both set the same `showEndConfirm` state. The confirmation dialog itself is rendered once, shared by both, so it appears correctly regardless of which view triggered it.
+
 If a monster has no valid actions in a step, that step may be skipped freely.
 
 After a successful attack: attacker returns to Idle state.
@@ -352,6 +380,15 @@ See DEF Shield section above. Uses currentDef, not the base def stat.
 
 When a monster's HP reaches 0, it is removed from the board.
 A 💀 death entry appears in the action log.
+
+## Combat Feedback (Board Effects)
+
+`src/components/board/BoardEffects.tsx` renders two transient animations, layered above the board grid:
+
+* **Kill** — a monster's tile flashes red with a 💥 burst when it's removed from `monsters` without an accompanying base HP change.
+* **Base hit** — a player's base tile flashes orange with a 🔥 burst when that player's `baseHp` decreases.
+
+Both are detected by diffing `monsters`/`players` against the previous render (not by hooking store actions), because in online PvP the client never runs `attackTarget`/`moveMonster` locally — it only receives state broadcast from the server. Diffing the replicated state is the only trigger that works identically offline and online. Each effect auto-removes itself ~700ms after spawning. Animation keyframes (`lou-kill-flash`, `lou-kill-icon`, `lou-base-flash`, `lou-base-icon`) live in `src/index.css`.
 
 ---
 
@@ -475,6 +512,8 @@ Use PNG for repeated game-board tiles and monster sprites — browsers cache and
 | Summon cell | Purple fill |
 | Player 1 paths | Blue tint overlay on path tile |
 | Player 2 paths | Red tint overlay on path tile |
+| Monster killed | Red flash + 💥 burst on its tile (`BoardEffects.tsx`) |
+| Base hit | Orange flash + 🔥 burst on the base tile (`BoardEffects.tsx`) |
 
 ---
 
@@ -581,6 +620,7 @@ Player input → dispatch(action)
 | `opponent_disconnected` | server → client | Shows `DisconnectOverlay` with forfeit countdown |
 | `game_over` | server → client | Sets winner (forfeit case) |
 | `reconnect_room` | client → server | Sent automatically on reconnect if `lou_room_code` + `lou_session` exist in localStorage |
+| `quit_room` | client → server | Sent by `emitQuit()` when the active player clicks Quit; server only honors it if the sender is the current `activePlayer`, then immediately emits `game_over { reason: 'forfeit' }` |
 
 ## ServerBroadcastState
 
@@ -610,10 +650,13 @@ Zustand store for all online-specific state. Fields:
 
 | Key | Purpose |
 |---|---|
-| `lou_campaign_unlocked` | Highest campaign stage unlocked (integer) |
-| `lou_nickname` | Player's online display name (persists across sessions) |
+| `lou_nickname` | Mirrors the authenticated account's `displayName` into `onlineStore` for PvP; no longer user-editable (the nickname input was removed from `LobbyScreen` once login replaced it) |
 | `lou_room_code` | Current room code — used to auto-rejoin on reconnect |
-| `lou_session` | UUID session token — used for reconnect authentication |
+| `lou_session` | UUID session token — used for mid-match reconnect (`reconnect_room`), separate from account login |
+
+Campaign progress (`highestUnlocked`) no longer lives in localStorage — it's stored per-account in Postgres (`CampaignProgress` model) and synced via `/auth/me` and `PUT /campaign-progress`. See `docs/AUTH_SPEC.md`.
+
+The refresh token is **not** a localStorage key — it's a server-set httpOnly cookie (`lou_refresh`), invisible to client JS.
 
 ## UI Components
 
@@ -622,6 +665,8 @@ Zustand store for all online-specific state. Fields:
 **`DisconnectOverlay.tsx`** — Full-screen overlay shown when `opponentDisconnected` is true. Displays a countdown to forfeit. Rendered inside `GameScreen`.
 
 **`LobbyScreen.tsx`** — Create Room / Join Room UI. Emits `create_room` or `join_room` to the server with nickname and session token. Displays the room code for the host to share. Handles the connecting → waiting state transition.
+
+**`TurnPhaseBar.tsx`** — Also renders the Quit button (right side of the turn bar) and its confirmation dialog. In online PvP the button is only shown when it's the local player's turn; confirming calls `emitQuit()`. In offline/campaign modes it's always shown; confirming resets the game and returns to the title screen.
 
 ---
 
@@ -633,7 +678,7 @@ Priority 2 — Basic AI ✅ (complete)
 
 Priority 3 — Campaign ✅ (complete)
 
-Priority 4 — Save System
+Priority 4 — Save System ✅ (complete — account auth + Postgres-backed campaign progress, see `docs/AUTH_SPEC.md`)
 
 Priority 5 — Online Multiplayer ✅ (complete)
 

@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client'
 import type { GameAction } from './actions'
 import type { PlayerId } from '../types/game'
+import { getAccessToken, onAccessTokenChange } from './authClient'
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001'
 
@@ -8,11 +9,19 @@ let socket: Socket | null = null
 
 export function getSocket(): Socket {
   if (!socket) {
-    socket = io(SERVER_URL, { autoConnect: false })
+    socket = io(SERVER_URL, { autoConnect: false, auth: { token: getAccessToken() } })
     attachHandlers(socket)
   }
   return socket
 }
+
+// Keep the handshake payload current as the access token refreshes/expires,
+// so a socket that reconnects (e.g. after a network blip) always presents
+// a live token — separate from the sessionToken/reconnect_room flow, which
+// is about re-attaching to a room, not proving identity.
+onAccessTokenChange((token) => {
+  if (socket) socket.auth = { token }
+})
 
 export function connectSocket() {
   getSocket().connect()
@@ -25,6 +34,10 @@ export function disconnectSocket() {
 
 export function emitAction(action: GameAction) {
   getSocket().emit('action', action)
+}
+
+export function emitQuit() {
+  getSocket().emit('quit_room')
 }
 
 // Lazy import to avoid circular dependency — gameStore imports from here indirectly
@@ -133,6 +146,21 @@ function attachHandlers(s: Socket) {
   s.on('disconnect', () => {
     import('../store/onlineStore').then(({ useOnlineStore }) => {
       useOnlineStore.getState().setConnectionStatus('reconnecting')
+    })
+  })
+
+  // A rejected handshake (e.g. a stale access token on a long-idle match,
+  // once REQUIRE_SOCKET_AUTH is enforced) surfaces here rather than as a
+  // normal 401 — refresh the token so socket.io's automatic reconnect
+  // picks up a live one on its next attempt. If the refresh token itself
+  // is no longer valid, there's no session to recover — log out.
+  s.on('connect_error', () => {
+    import('./authClient').then(({ refresh }) => {
+      refresh().catch(() => {
+        import('../store/authStore').then(({ useAuthStore }) => {
+          useAuthStore.getState().logout()
+        })
+      })
     })
   })
 }

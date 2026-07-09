@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useGameStore, selectReachableCells, selectAttackTargets, selectSummonableCells, selectMustActMonsters } from '../../store/gameStore'
 import { dispatch } from '../../network/dispatch'
 import Cell, { type HighlightType } from './Cell'
+import BoardEffects from './BoardEffects'
 import type { Coord } from '../../types/board'
 import { BOARD_ROWS, BOARD_COLS } from '../../constants/board'
 import { getPathCells, validatePathPlacement } from '../../game/paths'
@@ -127,7 +128,7 @@ export default function Board() {
 
   return (
     <div
-      className="border border-gray-600 inline-block"
+      className="relative border border-gray-600 inline-block"
       style={{ display: 'grid', gridTemplateColumns: `repeat(${BOARD_COLS}, 48px)` }}
       onMouseLeave={() => setHoverCell(null)}
     >
@@ -156,6 +157,7 @@ export default function Board() {
           )
         })
       )}
+      <BoardEffects />
     </div>
   )
 }

@@ -12,7 +12,7 @@ Replaces local 2-player PvP with network play. Two players connect via a 6-chara
 |---|---|
 | Transport | Socket.io v4 |
 | Server runtime | Node.js 20 + TypeScript (tsx watch in dev) |
-| Server framework | Express (HTTP health check only) |
+| Server framework | Express (health check + `/auth/*`, `/campaign-progress` REST routes — see `docs/AUTH_SPEC.md`) |
 | Client | socket.io-client |
 | Hosting | Render Web Service (persistent process) |
 
@@ -36,7 +36,7 @@ Neither client runs game logic during online play. All mutations happen on the s
 
 Each client generates a `sessionToken` (UUID v4) on first lobby visit, stored in `localStorage` as `lou_session`. Sent on every `create_room` and `join_room` event. The server maps `sessionToken → { roomCode, playerId }` so reconnecting players re-attach to their room without re-entering a code.
 
-When accounts are added later, `sessionToken` is replaced by a JWT — no other changes needed.
+Accounts have since been added (see `docs/AUTH_SPEC.md`) — `sessionToken` was deliberately **kept**, not replaced, because the JWT access token's short lifetime would break reconnection mid-match. The authenticated identity now supplies the player's `displayName` (`socket.data.displayName`, set by a Socket.io handshake middleware), while `sessionToken`/`reconnect_room` remain solely responsible for re-attaching to a room.
 
 ---
 
@@ -60,10 +60,14 @@ match runs
   → active player emits action events
   → server validates (active player check, phase check), applies, broadcasts state
 
-match ends (win / forfeit / timer expire)
+match ends (win / forfeit / timer expire / quit)
   → server emits: game_over { winner: PlayerId, reason: 'win' | 'forfeit' }
   → room marked inactive, cleaned up after 10 minutes
 ```
+
+### Quitting
+
+Either player can forfeit on their own turn via the Quit button (`TurnPhaseBar.tsx`), which emits `quit_room`. `handleQuit()` in `rooms.ts` mirrors `applyAction`'s turn gate — it no-ops unless the sender is the current `activePlayer` — then resolves through the same `emitGameOver(..., 'forfeit')` path used for disconnect-forfeit, so no separate client handling was needed. The client also hides the Quit button when it isn't the local player's turn, so the server check is a defense-in-depth backstop rather than the primary gate.
 
 ---
 
@@ -73,10 +77,11 @@ match ends (win / forfeit / timer expire)
 
 | Event | Payload | Notes |
 |---|---|---|
-| `create_room` | `{ nickname, sessionToken }` | host creates a room |
-| `join_room` | `{ roomCode, nickname, sessionToken }` | guest joins by code |
+| `create_room` | `{ nickname, sessionToken }` | host creates a room; `nickname` is only used as a fallback — once authenticated (see `docs/AUTH_SPEC.md`), the server prefers `socket.data.displayName` from the JWT handshake |
+| `join_room` | `{ roomCode, nickname, sessionToken }` | guest joins by code; same `nickname` fallback behavior as `create_room` |
 | `action` | `GameAction` | any game state action (see Actions) |
 | `reconnect_room` | `{ sessionToken }` | on page refresh / reconnect |
+| `quit_room` | — | active player forfeits; server ignores this if the sender isn't the current `activePlayer` |
 
 ### Server → Client
 

@@ -303,38 +303,6 @@ export default function SidePanel({ playerId }: Props) {
               >
                 Done Actions →
               </button>
-
-              {/* Confirmation dialog */}
-              {showEndConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-                  <div className="bg-gray-900 border border-amber-500 rounded-lg p-5 w-72 shadow-2xl flex flex-col gap-3">
-                    <p className="text-amber-400 font-bold text-sm">Skip remaining monsters?</p>
-                    <p className="text-gray-300 text-xs">
-                      {mustActMonsters.length} monster{mustActMonsters.length > 1 ? 's have' : ' has'} not acted yet:
-                    </p>
-                    <ul className="text-amber-300 text-xs flex flex-col gap-0.5">
-                      {mustActMonsters.map(m => (
-                        <li key={m.id} className="capitalize">• {m.type}</li>
-                      ))}
-                    </ul>
-                    <p className="text-gray-400 text-[10px]">End turn anyway? Unacted monsters will forfeit their actions.</p>
-                    <div className="flex gap-2 mt-1">
-                      <button
-                        onClick={() => { setShowEndConfirm(false); dispatch({ type: 'FORCE_END_MONSTER_ACTIONS' }) }}
-                        className="flex-1 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs rounded font-bold"
-                      >
-                        End Turn
-                      </button>
-                      <button
-                        onClick={() => setShowEndConfirm(false)}
-                        className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -458,6 +426,38 @@ export default function SidePanel({ playerId }: Props) {
               className="w-full py-2 bg-yellow-600 hover:bg-yellow-500 text-white font-black rounded">
               End Turn →
             </button>
+          )}
+
+          {/* Confirmation dialog — shared by both "Done Actions" buttons above */}
+          {showEndConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+              <div className="bg-gray-900 border border-amber-500 rounded-lg p-5 w-72 shadow-2xl flex flex-col gap-3">
+                <p className="text-amber-400 font-bold text-sm">Skip remaining monsters?</p>
+                <p className="text-gray-300 text-xs">
+                  {mustActMonsters.length} monster{mustActMonsters.length > 1 ? 's have' : ' has'} not acted yet:
+                </p>
+                <ul className="text-amber-300 text-xs flex flex-col gap-0.5">
+                  {mustActMonsters.map(m => (
+                    <li key={m.id} className="capitalize">• {m.type}</li>
+                  ))}
+                </ul>
+                <p className="text-gray-400 text-[10px]">End turn anyway? Unacted monsters will forfeit their actions.</p>
+                <div className="flex gap-2 mt-1">
+                  <button
+                    onClick={() => { setShowEndConfirm(false); dispatch({ type: 'FORCE_END_MONSTER_ACTIONS' }) }}
+                    className="flex-1 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs rounded font-bold"
+                  >
+                    End Turn
+                  </button>
+                  <button
+                    onClick={() => setShowEndConfirm(false)}
+                    className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
         </div>

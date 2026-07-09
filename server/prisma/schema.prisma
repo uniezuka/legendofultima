@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Account root. Deliberately holds no password and no provider-specific
+// fields — those live in child tables so OAuth providers can be added later
+// without a migration.
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  credential       Credential?
+  identities       Identity[]
+  refreshTokens    RefreshToken[]
+  campaignProgress CampaignProgress?
+}
+
+// Email/password credential, 1:1 with User. Isolated from User so a
+// Google/Facebook-only signup simply has no row here.
+model Credential {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// OAuth-ready identity table. Empty for now — a future Google/Facebook
+// login upserts here keyed on (provider, providerAccountId), never on
+// email, since some providers don't guarantee a verified email.
+model Identity {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          String
+  providerAccountId String
+  email             String?
+  createdAt         DateTime @default(now())
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// Refresh tokens are stored hashed and rotated on every use.
+// replacedById enables reuse-detection: a token presented after it has
+// already been rotated away means compromise, and the whole chain for
+// that user should be revoked.
+model RefreshToken {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String    @unique
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  userAgent    String?
+  ipAddress    String?
+
+  @@index([userId])
+}
+
+// Replaces the lou_campaign_unlocked localStorage key — 1:1 with User.
+model CampaignProgress {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  highestUnlocked Int      @default(1)
+  updatedAt       DateTime @updatedAt
+}

@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react'
 import { useCampaignStore } from '../../store/campaignStore'
+import { useAuthStore } from '../../store/authStore'
 
 // Renders logo.png with its baked-in checkerboard background stripped out.
 // Pixels that are near-white AND near-neutral (r≈g≈b > 190) are made transparent.
@@ -41,6 +42,7 @@ export default function TitleScreen() {
   const goToLobby = useCampaignStore(s => s.goToLobby)
   const goToHelp = useCampaignStore(s => s.goToHelp)
   const goToUpdates = useCampaignStore(s => s.goToUpdates)
+  const logout = useAuthStore(s => s.logout)
 
   return (
     <div
@@ -105,6 +107,12 @@ export default function TitleScreen() {
               Junie Lorenzo
             </a>
           </p>
+          <button
+            onClick={() => logout()}
+            className="text-gray-600 hover:text-gray-400 underline underline-offset-2 mt-1"
+          >
+            Log out
+          </button>
         </div>
       </div>
     </div>

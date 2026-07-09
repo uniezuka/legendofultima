@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useCampaignStore } from '../../store/campaignStore'
 import { useOnlineStore } from '../../store/onlineStore'
+import { useAuthStore } from '../../store/authStore'
 import { connectSocket, getSocket } from '../../network/socket'
 
 export default function LobbyScreen() {
   const returnToTitle = useCampaignStore(s => s.returnToTitle)
+  const displayName = useAuthStore(s => s.user?.displayName ?? '')
   const {
-    myNickname, setMyNickname, lobbyStatus, setLobbyStatus,
+    setMyNickname, lobbyStatus, setLobbyStatus,
     roomCode, roomError, setRoomError, myPlayerId, setOnline,
     connectionStatus,
   } = useOnlineStore()
 
   const [joinCode, setJoinCode] = useState('')
-  const [localNickname, setLocalNickname] = useState(myNickname || '')
 
   // Connect socket when lobby mounts
   useEffect(() => {
@@ -37,25 +38,24 @@ export default function LobbyScreen() {
   }
 
   function handleCreate() {
-    if (!localNickname.trim()) return
-    setMyNickname(localNickname.trim())
+    setMyNickname(displayName)
     setOnline(true)
     setLobbyStatus('creating')
     getSocket().emit('create_room', {
-      nickname: localNickname.trim(),
+      nickname: displayName,
       sessionToken: getSessionToken(),
     })
   }
 
   function handleJoin() {
-    if (!localNickname.trim() || !joinCode.trim()) return
-    setMyNickname(localNickname.trim())
+    if (!joinCode.trim()) return
+    setMyNickname(displayName)
     setOnline(true)
     setLobbyStatus('joining')
     setRoomError(null)
     getSocket().emit('join_room', {
       roomCode: joinCode.trim().toUpperCase(),
-      nickname: localNickname.trim(),
+      nickname: displayName,
       sessionToken: getSessionToken(),
     })
   }
@@ -83,20 +83,7 @@ export default function LobbyScreen() {
         <div className="text-center">
           <h1 className="text-yellow-400 text-3xl font-black drop-shadow">Online PvP</h1>
           <p className="text-gray-400 text-sm mt-1">Play against a friend over the internet.</p>
-        </div>
-
-        {/* Nickname */}
-        <div className="flex flex-col gap-1">
-          <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Your Name</label>
-          <input
-            type="text"
-            value={localNickname}
-            onChange={e => { setLocalNickname(e.target.value); setRoomError(null) }}
-            maxLength={20}
-            placeholder="Enter nickname…"
-            className="bg-gray-900 border border-gray-600 text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-yellow-500"
-            disabled={isWaiting}
-          />
+          <p className="text-gray-500 text-xs mt-1">Playing as <span className="text-gray-300 font-semibold">{displayName}</span></p>
         </div>
 
         {/* Error */}
@@ -120,7 +107,7 @@ export default function LobbyScreen() {
           <>
             <button
               onClick={handleCreate}
-              disabled={!localNickname.trim() || isConnecting}
+              disabled={isConnecting}
               className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black font-black rounded-lg text-base"
             >
               {isConnecting ? 'Connecting…' : 'Create Room'}
@@ -144,7 +131,7 @@ export default function LobbyScreen() {
               />
               <button
                 onClick={handleJoin}
-                disabled={!localNickname.trim() || joinCode.length < 6 || isConnecting}
+                disabled={joinCode.length < 6 || isConnecting}
                 className="w-full py-3 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white font-bold rounded-lg text-base"
               >
                 Join Room

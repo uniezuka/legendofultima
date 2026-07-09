@@ -163,7 +163,7 @@ Screenshot placeholder (`[ Game screenshot ]`) is present in the page — replac
 
 Version history / roadmap screen. Accessed via "📋 Updates" on the title screen.
 
-`src/components/screens/UpdatesScreen.tsx` — shows current version, release date, and feature summary. See "Current Version" below for the authoritative version number.
+`src/components/screens/UpdatesScreen.tsx` — renders `UPDATE_HISTORY` from `src/constants/updates.ts` (newest first), each entry showing version, release date, and feature summary. Add a new entry here (do not overwrite the previous one) whenever the version bumps. See "Current Version" below for the authoritative version number.
 
 ---
 

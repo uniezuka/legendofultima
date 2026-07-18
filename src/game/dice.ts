@@ -1,3 +1,1 @@
-export function rollD6(): number {
-  return Math.floor(Math.random() * 6) + 1
-}
+export { rollD6 } from '../../shared/dice'

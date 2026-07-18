@@ -584,11 +584,21 @@ Difficulty levels: `idle` | `easy` | `medium` | `hard`.
 
 ## Shared Types
 
-`shared/types.ts` — single source of truth for all types used by both frontend and server: `PlayerId`, `GameMode`, `TurnPhase`, `Player`, `Coord`, `CellType`, `Cell`, `PathShapeName`, `PathShape`, `PathOption`, `MonsterState`, `MonsterType`, `MonsterAction`, `Monster`, `GameAction`.
+`shared/types.ts` — single source of truth for all types used by both frontend and server: `PlayerId`, `GameMode`, `TurnPhase`, `Player`, `Coord`, `CellType`, `Cell`, `PathShapeName`, `PathShape`, `PathOption`, `MonsterState`, `MonsterType`, `MonsterAction`, `Monster`, `GameAction`, `MonsterTemplate`, `AbilityKind`, `AbilityDefinition`.
 
-Frontend type files (`src/types/board.ts`, `src/types/game.ts`, `src/types/monster.ts`) re-export from `shared/types.ts` and keep only their local additions (`GameState` in game.ts, `MonsterTemplate` in monster.ts).
+Frontend type files (`src/types/board.ts`, `src/types/game.ts`, `src/types/monster.ts`) re-export from `shared/types.ts` and keep only their local additions (`GameState` in game.ts).
 
 Server type file (`server/game/types.ts`) re-exports from `shared/types.ts` and keeps only `ServerGameState`.
+
+## Shared Runtime Files
+
+The client/server duplication this project used to have for game-logic files (each side hand-copying the other, marked `// Shared with X — keep in sync`) is gone — those files now live once under `shared/` (a plain top-level directory, not an npm package) and both sides import them via relative paths, exactly like `shared/types.ts` above:
+
+- `shared/dice.ts`, `shared/constants.ts`, `shared/economy.ts`, `shared/abilities.ts`, `shared/movement.ts`, `shared/combat.ts`, `shared/paths.ts`.
+- Each side's local file (`src/game/*.ts` / `src/constants/*.ts` vs `server/game/*.ts`) is now a thin re-export, keeping only what's genuinely local to that side — e.g. `CELL_SIZE_PX` (client-only rendering constant) in `src/constants/board.ts`; `MONSTER_TYPE_ORDER`/`SHOP_MONSTER_TYPES`/`ALL_MONSTER_TYPES` curation lists in `src/constants/monsters.ts`; `ABILITY_DESCRIPTIONS`/`getMonsterSkillId()` display helpers in `src/constants/abilities.ts`; `coordKey`/`getAbilityTargets` (client-only ability-target enumeration for UI highlighting) in `src/game/movement.ts`.
+- `server/game/paths.ts`'s `generatePaths` is intentionally stateless (`(startId) => { paths, nextId }`, threaded through `ServerGameState.nextPathId` / the client's `GameState.nextPathId`) rather than a module-level counter — required for correctness across concurrent PvP rooms server-side, and the client was migrated to match so there's exactly one implementation.
+
+**Important — verifying changes to any `shared/*.ts` runtime file:** don't rely on `npm run dev:all` alone. The server dev script (`tsx watch`) transpiles TS on the fly and does not reproduce `tsc`'s real compile/emit behavior. This project has twice broken on Render from exactly this class of gap (an ESM/CommonJS module-resolution mismatch, then a missing `rootDir` when `shared/types.ts` was first introduced — both invisible in local dev, only surfacing in the real build). Always also run `cd server && npm run build && npm start` (the same commands Render's `buildCommand`/`startCommand` use) and confirm the compiled server boots without `MODULE_NOT_FOUND` errors before trusting a change to a shared runtime file.
 
 ## Files
 

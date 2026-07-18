@@ -50,6 +50,7 @@ export function createInitialGameState(): GameState {
     monsters: {},
     currentDiceRoll: null,
     generatedPaths: [],
+    nextPathId: 1,
     selectedPathId: null,
     selectedPathRotation: 0,
     selectedMonsterId: null,

@@ -14,6 +14,7 @@ export interface GameState {
   monsters: Record<string, Monster>
   currentDiceRoll: number | null
   generatedPaths: PathOption[]
+  nextPathId: number
   // UI-only selection fields — never sent to or received from the server
   selectedPathId: string | null
   selectedPathRotation: number

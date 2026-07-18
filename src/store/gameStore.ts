@@ -151,10 +151,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     if (state.phase === 'generatePaths') {
-      const paths = generatePaths()
+      const { paths, nextId } = generatePaths(state.nextPathId)
       set(s => ({
         phase: 'rollDice',
         generatedPaths: paths,
+        nextPathId: nextId,
         selectedPathId: null,
         selectedPathRotation: 0,
         log: [...s.log, `Generated 3 paths`],

@@ -1,14 +1,12 @@
-import type { MonsterTemplate } from '../types/monster'
+export { MONSTER_TEMPLATES } from '../../shared/constants'
 
-// Open registry — add a new entry here to make a monster available in-game.
-// No type definitions need to change; MonsterType is just string.
-export const MONSTER_TEMPLATES: Record<string, MonsterTemplate> = {
-  slime:  { type: 'slime',  label: 'Slime',  cost: 1, hp: 8,  atk: 2, def: 4, move: 1, range: 1 },
-  goblin: { type: 'goblin', label: 'Goblin', cost: 2, hp: 5,  atk: 5, def: 2, move: 2, range: 1 },
-  archer: { type: 'archer', label: 'Archer', cost: 3, hp: 4,  atk: 4, def: 1, move: 1, range: 2 },
-  knight: { type: 'knight', label: 'Knight', cost: 4, hp: 12, atk: 4, def: 6, move: 1, range: 1 },
-  dragon: { type: 'dragon', label: 'Dragon', cost: 7, hp: 15, atk: 8, def: 5, move: 2, range: 1 },
-}
-
-// Controls display order in the summon roster. Add new monster IDs here after registering above.
+// Controls display order in the in-match summon roster (SidePanel/MonsterRoster) and the
+// Campaign AI's affordable-summon list. Deliberately stays at the 5 free starters — the
+// active summon roster is filtered to the player's loadout in Phase IV, not this constant.
 export const MONSTER_TYPE_ORDER: string[] = ['slime', 'goblin', 'archer', 'knight', 'dragon']
+
+// Shop-only monster types, purchasable but not summonable until added to a loadout.
+export const SHOP_MONSTER_TYPES: string[] = ['white_mage', 'black_mage']
+
+// Full registry — used by the Shop screen (Phase V) to list every monster in the game.
+export const ALL_MONSTER_TYPES: string[] = [...MONSTER_TYPE_ORDER, ...SHOP_MONSTER_TYPES]

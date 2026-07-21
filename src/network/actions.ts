@@ -12,6 +12,7 @@ export type GameAction =
   | { type: 'SKIP_MOVE'; payload: { monsterId: string } }
   | { type: 'ATTACK_TARGET'; payload: { attackerId: string; targetId: string } }
   | { type: 'DEFEND_MONSTER'; payload: { monsterId: string } }
+  | { type: 'USE_ABILITY'; payload: { monsterId: string; targetCoord: Coord } }
   | { type: 'SKIP_COMBAT'; payload: { monsterId: string } }
   | { type: 'DONE_MONSTER_ACTIONS' }
   | { type: 'FORCE_END_MONSTER_ACTIONS' }

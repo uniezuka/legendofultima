@@ -41,20 +41,23 @@ function PhaseCard({ step, title, badge, color, children }: PhaseCardProps) {
   )
 }
 
-function MonsterRow({ name, cost, hp, atk, def, mov, rng }: {
-  name: string; cost: number; hp: number; atk: number; def: number; mov: number; rng: number
+function MonsterRow({ name, cost, hp, atk, def, mov, rng, passive }: {
+  name: string; cost: number; hp: number; atk: number; def: number; mov: number; rng: number; passive?: string
 }) {
   return (
-    <div className="flex items-center gap-3 py-1.5 border-b border-gray-800 last:border-0 text-sm">
-      <span className="text-white font-semibold w-16 flex-shrink-0">{name}</span>
-      <span className="text-purple-400 w-14 flex-shrink-0">{cost} mana</span>
-      <div className="flex gap-3 text-gray-400 flex-wrap">
-        <span><span className="text-green-400">HP</span> {hp}</span>
-        <span><span className="text-red-400">ATK</span> {atk}</span>
-        <span><span className="text-cyan-400">DEF</span> {def}</span>
-        <span><span className="text-blue-400">MOV</span> {mov}</span>
-        <span><span className="text-yellow-400">RNG</span> {rng}</span>
+    <div className="flex flex-col gap-0.5 py-1.5 border-b border-gray-800 last:border-0 text-sm">
+      <div className="flex items-center gap-3">
+        <span className="text-white font-semibold w-16 flex-shrink-0">{name}</span>
+        <span className="text-purple-400 w-14 flex-shrink-0">{cost} mana</span>
+        <div className="flex gap-3 text-gray-400 flex-wrap">
+          <span><span className="text-green-400">HP</span> {hp}</span>
+          <span><span className="text-red-400">ATK</span> {atk}</span>
+          <span><span className="text-cyan-400">DEF</span> {def}</span>
+          <span><span className="text-blue-400">MOV</span> {mov}</span>
+          <span><span className="text-yellow-400">RNG</span> {rng}</span>
+        </div>
       </div>
+      {passive && <p className="text-yellow-500/90 text-[11px] pl-[76px]">{passive}</p>}
     </div>
   )
 }
@@ -201,7 +204,8 @@ export default function HelpScreen() {
             <MonsterRow name="Goblin" cost={2} hp={5}  atk={5} def={2} mov={2} rng={1} />
             <MonsterRow name="Archer" cost={3} hp={4}  atk={4} def={1} mov={1} rng={2} />
             <MonsterRow name="Knight" cost={4} hp={12} atk={4} def={6} mov={1} rng={1} />
-            <MonsterRow name="Dragon" cost={7} hp={15} atk={8} def={5} mov={2} rng={1} />
+            <MonsterRow name="Dragon" cost={7} hp={15} atk={8} def={5} mov={2} rng={1}
+              passive="🔥 Splash: also hits enemies next to its target for half ATK. Shields still help, but they can't hit back." />
           </div>
           <p className="text-gray-500 text-xs mt-2">RNG 2 = can attack two tiles away. MOV = tiles moved per turn.</p>
         </Section>

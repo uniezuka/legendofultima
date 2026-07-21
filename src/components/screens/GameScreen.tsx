@@ -3,6 +3,7 @@ import { useGameStore } from '../../store/gameStore'
 import { useCampaignStore } from '../../store/campaignStore'
 import { useOnlineStore } from '../../store/onlineStore'
 import { useAiController } from '../../game/useAiController'
+import useGameAudio from '../../hooks/useGameAudio'
 import { CAMPAIGN_STAGES } from '../../constants/campaign'
 import type { AiDifficulty } from '../../constants/campaign'
 import Board from '../board/Board'
@@ -27,7 +28,13 @@ function CampaignResultOverlay() {
   const isWin = winner === 'player1'
   const isLoss = winner === 'player2'
 
-  // Unlock next stage as soon as player wins
+  // Unlock next stage as soon as player wins. The campaign-win Gold reward
+  // rides along on this same server call, gated server-side on the write
+  // genuinely advancing highestUnlocked (a "first clear") — replaying an
+  // already-cleared stage still calls this harmlessly but earns no reward.
+  // See unlockNextStage()/syncCampaignProgress() in campaignStore.ts and
+  // docs/SHOP_ECONOMY_SPEC.md. Campaign losses aren't reported anywhere —
+  // there's no campaign win/loss record to update (see profileStore.ts).
   useEffect(() => {
     if (isWin) unlockNextStage()
   }, [isWin, unlockNextStage])
@@ -159,6 +166,8 @@ export default function GameScreen() {
 
   const stage = CAMPAIGN_STAGES[currentStage - 1]
   const difficulty: AiDifficulty = stage?.difficulty ?? 'easy'
+
+  useGameAudio()
 
   return (
     <div

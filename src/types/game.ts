@@ -22,6 +22,7 @@ export interface GameState {
   selectedMonsterTemplateType: string | null
   inspectedMonsterId: string | null
   pendingAttackTargetId: string | null
+  isTargetingAbility: boolean
   winner: PlayerId | null
   log: string[]
 }

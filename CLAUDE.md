@@ -2,9 +2,9 @@
 
 # Current Version
 
-**0.2.0** (Alpha) — authoritative source: the `version` field in `package.json`, mirrored in `server/package.json`. Bump both together when releasing.
+**0.3.0** (Alpha) — authoritative source: the `version` field in `package.json`, mirrored in `server/package.json`. Bump both together when releasing.
 
-Bumped from 0.1.0 → 0.2.0 for the account authentication system and Postgres-backed campaign progress saving (see `docs/AUTH_SPEC.md`) — a minor bump per semver's pre-1.0 convention (new backwards-compatible functionality, not just a fix).
+Bumped from 0.2.0 → 0.3.0 for the Gold economy / Shop / Loadout system and the White Mage / Black Mage monster abilities (see `docs/SHOP_ECONOMY_SPEC.md` and `docs/MONSTER_ABILITIES_SPEC.md`) — a minor bump per semver's pre-1.0 convention (new backwards-compatible functionality, not just a fix).
 
 ---
 
@@ -48,6 +48,7 @@ instead of localStorage. Live game state during a match still lives in
 Zustand on the client, replicated from the server's authoritative state —
 that part of the architecture is unchanged.
 Do not add further backend systems beyond auth/campaign-progress until explicitly requested.
+A Gold economy / Shop / Loadout / Stats backend was explicitly requested and is implemented — see `docs/SHOP_ECONOMY_SPEC.md`.
 
 ---
 
@@ -254,7 +255,7 @@ Path Placement UX:
 Path Rules:
 * Must connect to an existing friendly path or friendly base
 * Cannot overwrite existing tiles
-* Placement is permanent
+* Placement is permanent — the only exception is Black Mage's `destroy_path` ability, which removes an adjacent path tile (see "Shop, Loadout & Monster Abilities" below and `docs/MONSTER_ABILITIES_SPEC.md`)
 
 ## Monster Cap
 
@@ -376,6 +377,12 @@ Damage = ATK (to target HP)
 
 See DEF Shield section above. Uses currentDef, not the base def stat.
 
+## Splash Damage (Dragon)
+
+The Dragon is the only monster with `splashDamageMultiplier` set (0.5, in `MONSTER_TEMPLATES`). When it attacks, any enemy monster orthogonally adjacent to the primary target also takes damage equal to 50% of the Dragon's ATK (rounded down), resolved through the same shield math as a normal attack (chip / break / no-damage against a Defending monster). Splash victims deal no counter-damage back to the Dragon — the shield "reflects damage to attacker" rule only applies to the primary target.
+
+This exists specifically to give a single high-cost monster a way to fight back against a swarm of cheap ones, since a mobbed target's adjacent tiles are, by definition, the rest of the mob. `getSplashTargets()` in `combat.ts` (both the server and client copies) computes the victim list. The attack preview panel shows the splash breakdown before the player confirms, and the board highlights splash victims (🔥 icon, yellow ring) distinctly from the primary pending target.
+
 ## Death
 
 When a monster's HP reaches 0, it is removed from the board.
@@ -425,10 +432,20 @@ Archer
 Cost: 3 | HP: 4 | ATK: 4 | DEF: 1 | MOVE: 1 | Range: 2
 
 Knight
-Cost: 4 | HP: 12 | ATK: 4 | DEF: 6 | MOVE: 1 | Range: 1
+Cost: 4 | HP: 10 | ATK: 4 | DEF: 6 | MOVE: 1 | Range: 1
 
 Dragon
-Cost: 7 | HP: 15 | ATK: 8 | DEF: 5 | MOVE: 2 | Range: 1
+Cost: 7 | HP: 12 | ATK: 8 | DEF: 5 | MOVE: 2 | Range: 1 — Splash: also hits enemies orthogonally adjacent to its target for 50% ATK (see Combat → Splash Damage)
+
+---
+
+# Shop, Loadout & Monster Abilities
+
+**Implemented** — full specs in `docs/SHOP_ECONOMY_SPEC.md` and `docs/MONSTER_ABILITIES_SPEC.md`, phase-by-phase implementation log in `docs/SHOP_ABILITIES_TASKS.md` (manual smoke testing across a full campaign match and a full PvP match completed).
+
+Summary: players earn Gold from match wins/losses (both Campaign and PvP) and spend it in a Shop to permanently unlock 2 new monsters — White Mage (`create_path` ability) and Black Mage (`destroy_path` ability) — beyond the 5 free starters. Since the active roster is always 5 monsters, owning more than 5 requires picking an active loadout via a Loadout screen. One global loadout is shared by Campaign and PvP; the Campaign AI opponent's monster access is unaffected. A Stats tab tracks win/loss record per mode. All three (Shop, Loadout, Stats) live in one tabbed "Profile" screen.
+
+The two mage abilities are the first exception to the Design Philosophy's "avoid status effects / complex systems until the core loop is validated" guidance below — deliberately narrow in scope (one-shot board effect, no duration/stacking), not a skill tree.
 
 ---
 
@@ -493,6 +510,16 @@ Unused decorative SVGs (`bush.svg`, `tree.svg`, `rock.svg`, `bridge.svg`, `banne
 ## PNG vs SVG preference
 
 Use PNG for repeated game-board tiles and monster sprites — browsers cache and GPU-blit PNGs efficiently. Use SVG for scalable UI elements (icons, title background). The dice face is rendered procedurally via `DiceFace.tsx`, not as per-value image files.
+
+## Audio (`/assets/bgm/`, `/assets/sfx/`)
+
+Keys and filenames are defined in `src/constants/audio.ts` (`BGM_FILES` / `SFX_FILES`). Drop a file at the matching path and it plays automatically — no code changes needed. Missing files fail silently (see `src/audio/audioManager.ts`), so partial coverage is safe.
+
+**BGM** (`/assets/bgm/`, looped except victory/defeat): `title.mp3`, `campaign.mp3`, `pvp.mp3`, `victory.mp3`, `defeat.mp3`
+
+**SFX** (`/assets/sfx/`, one-shot): `dice-roll.mp3`, `path-place.mp3`, `path-skip.mp3`, `summon.mp3`, `move.mp3`, `shield-up.mp3`, `shield-break.mp3`, `attack-hit.mp3`, `base-hit.mp3`, `death.mp3`, `mana-gain.mp3`, `ui-click.mp3`
+
+`useGameAudio.ts` fires SFX by diffing typed `gameStore` fields (dice roll, board cell count, monster state/hp/coord, base HP, luck/mana) — the same diffing technique `BoardEffects.tsx` uses for kill/base-hit flashes, chosen for the same reason: it must fire identically whether state changed via local store calls (offline) or arrived via server broadcast (online PvP). `BgmController.tsx` (mounted in `App.tsx`) picks the active BGM track from `gameStarted`/`gameMode`/`winner`. Player-facing mute/volume control is `AudioControls.tsx`, backed by `src/store/audioStore.ts` (persisted to `localStorage` under `lou_muted`/`lou_bgm_volume`/`lou_sfx_volume`, following the raw-localStorage convention already used by `onlineStore.ts`).
 
 ---
 

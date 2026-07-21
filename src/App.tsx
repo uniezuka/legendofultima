@@ -9,18 +9,17 @@ import StageIntroScreen from './components/screens/StageIntroScreen'
 import LobbyScreen from './components/screens/LobbyScreen'
 import HelpScreen from './components/screens/HelpScreen'
 import UpdatesScreen from './components/screens/UpdatesScreen'
+import ProfileScreen from './components/screens/ProfileScreen'
 import LoginScreen from './components/screens/LoginScreen'
 import SignupScreen from './components/screens/SignupScreen'
 import SplashScreen from './components/screens/SplashScreen'
+import BgmController from './audio/BgmController'
+import AudioControls from './components/ui/AudioControls'
 
-export default function App() {
+function Screens() {
   const gameStarted = useGameStore(s => s.gameStarted)
   const screen = useCampaignStore(s => s.screen)
   const authStatus = useAuthStore(s => s.status)
-
-  useEffect(() => {
-    useAuthStore.getState().bootstrap()
-  }, [])
 
   if (authStatus === 'checking') return <SplashScreen />
   if (authStatus === 'unauthenticated') {
@@ -33,5 +32,20 @@ export default function App() {
   if (screen === 'campaign-intro') return <StageIntroScreen />
   if (screen === 'help') return <HelpScreen />
   if (screen === 'updates') return <UpdatesScreen />
+  if (screen === 'profile') return <ProfileScreen />
   return <TitleScreen />
+}
+
+export default function App() {
+  useEffect(() => {
+    useAuthStore.getState().bootstrap()
+  }, [])
+
+  return (
+    <>
+      <BgmController />
+      <AudioControls />
+      <Screens />
+    </>
+  )
 }

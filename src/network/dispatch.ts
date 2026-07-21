@@ -25,6 +25,7 @@ export function dispatch(action: GameAction) {
     case 'SKIP_MOVE':                store.skipMove(); break
     case 'ATTACK_TARGET':            store.attackTarget(action.payload.targetId); break
     case 'DEFEND_MONSTER':           store.defendMonster(); break
+    case 'USE_ABILITY':              store.useAbility(action.payload.targetCoord); break
     case 'SKIP_COMBAT':              store.skipCombat(); break
     case 'DONE_MONSTER_ACTIONS':     store.doneMonsterActions(); break
     case 'FORCE_END_MONSTER_ACTIONS': store.forceEndMonsterActions(); break

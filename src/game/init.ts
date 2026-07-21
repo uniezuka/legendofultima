@@ -57,6 +57,7 @@ export function createInitialGameState(): GameState {
     selectedMonsterTemplateType: null,
     inspectedMonsterId: null,
     pendingAttackTargetId: null,
+    isTargetingAbility: false,
     winner: null,
     log: [],
   }

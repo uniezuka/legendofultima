@@ -1,4 +1,5 @@
 import { useGameStore } from '../../store/gameStore'
+import { MONSTER_TEMPLATES } from '../../constants/monsters'
 
 const STATE_LABEL: Record<string, string> = {
   summoning: '💤 Summoning',
@@ -83,6 +84,13 @@ export default function MonsterInspector() {
         <span className="text-gray-500">Pos</span>
         <span className="text-gray-400 font-mono text-[10px]">r{m.coord.row} c{m.coord.col}</span>
       </div>
+
+      {/* Passive trait (e.g. Dragon splash) */}
+      {MONSTER_TEMPLATES[m.type]?.passiveDescription && (
+        <div className="mt-2 pt-2 border-t border-gray-700 text-[10px] text-gray-400 leading-snug">
+          {MONSTER_TEMPLATES[m.type].passiveDescription}
+        </div>
+      )}
     </div>
   )
 }

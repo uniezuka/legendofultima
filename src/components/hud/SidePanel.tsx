@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react'
 import { useGameStore, selectReachableCells, selectAttackTargets, selectMustActMonsters } from '../../store/gameStore'
 import { useOnlineStore } from '../../store/onlineStore'
 import { dispatch } from '../../network/dispatch'
+import { playSfx } from '../../audio/audioManager'
 import type { PlayerId } from '../../types/game'
-import { MONSTER_TEMPLATES, MONSTER_TYPE_ORDER } from '../../constants/monsters'
+import { MONSTER_TEMPLATES } from '../../constants/monsters'
+import { ABILITY_DESCRIPTIONS, getMonsterSkillId } from '../../constants/abilities'
+import { useSummonableTypes } from '../../hooks/useSummonableTypes'
 import { LUCK_SPEND_COST } from '../../constants/board'
-import { resolveCombat } from '../../game/combat'
+import { resolveCombat, getSplashTargets } from '../../game/combat'
 import DiceFace from './DiceFace'
 import TurnTimer from './TurnTimer'
 
@@ -52,6 +55,7 @@ export default function SidePanel({ playerId }: Props) {
   const diceRoll = useGameStore(s => s.currentDiceRoll)
 
   const pendingAttackTargetId = useGameStore(s => s.pendingAttackTargetId)
+  const isTargetingAbility = useGameStore(s => s.isTargetingAbility)
 
   // Pure UI state — always local, never dispatched to server
   const selectPath = useGameStore(s => s.selectPath)
@@ -59,6 +63,9 @@ export default function SidePanel({ playerId }: Props) {
   const selectTemplate = useGameStore(s => s.selectMonsterTemplate)
   const selectMonster = useGameStore(s => s.selectMonster)
   const setPendingAttackTarget = useGameStore(s => s.setPendingAttackTarget)
+  const setTargetingAbility = useGameStore(s => s.setTargetingAbility)
+
+  const summonableTypes = useSummonableTypes(playerId)
 
   const { isOnline, myPlayerId, turnTimeLeft } = useOnlineStore()
 
@@ -154,7 +161,7 @@ export default function SidePanel({ playerId }: Props) {
               ) : (
                 <>
                   <DiceFace value={diceRoll} size={64} className="mx-auto drop-shadow-lg" />
-                  <button onClick={() => dispatch({ type: 'ADVANCE_PHASE' })}
+                  <button onClick={() => { playSfx('ui-click'); dispatch({ type: 'ADVANCE_PHASE' }) }}
                     className="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded font-bold">
                     Place Path →
                   </button>
@@ -194,7 +201,7 @@ export default function SidePanel({ playerId }: Props) {
                 const isMatch = path.cost === diceRoll
                 const isSel = path.id === selectedPathId
                 return (
-                  <button key={path.id} onClick={() => isMatch && selectPath(path.id)}
+                  <button key={path.id} onClick={() => { if (isMatch) { playSfx('ui-click'); selectPath(path.id) } }}
                     disabled={!isMatch}
                     className={`flex items-center gap-2 p-2 rounded border transition-colors text-left
                       ${!isMatch ? 'border-gray-700 bg-gray-900 opacity-40 cursor-not-allowed'
@@ -212,7 +219,7 @@ export default function SidePanel({ playerId }: Props) {
               })}
 
               {selectedPathId && (
-                <button onClick={() => setRotation((pathRotation + 90) % 360)}
+                <button onClick={() => { playSfx('ui-click'); setRotation((pathRotation + 90) % 360) }}
                   className="w-full py-1 bg-gray-600 hover:bg-gray-500 text-white text-xs rounded">
                   ↻ Rotate 90°
                 </button>
@@ -234,14 +241,14 @@ export default function SidePanel({ playerId }: Props) {
             <div className="flex flex-col gap-1.5">
               <span className="text-gray-400 text-xs font-semibold">Summon Monster</span>
 
-              {MONSTER_TYPE_ORDER.map((type) => {
+              {summonableTypes.map((type) => {
                 const t = MONSTER_TEMPLATES[type]
                 const canAfford = player.mana >= t.cost
                 const atCap = player.monsterCount >= 8
                 const disabled = !canAfford || atCap
                 const isSel = selectedMonsterTemplateType === type
                 return (
-                  <button key={type} onClick={() => !disabled && selectTemplate(type)}
+                  <button key={type} onClick={() => { if (!disabled) { playSfx('ui-click'); selectTemplate(type) } }}
                     disabled={disabled}
                     className={`flex items-center gap-2 p-1.5 rounded border text-left transition-colors
                       ${disabled ? 'border-gray-700 bg-gray-900 opacity-40 cursor-not-allowed'
@@ -261,8 +268,12 @@ export default function SidePanel({ playerId }: Props) {
                         <span className="text-yellow-300 text-xs font-bold">{t.label}</span>
                         <span className="text-blue-300 text-[10px]">{t.cost}✦</span>
                       </div>
-                      <div className="text-gray-400 text-[10px]">
-                        HP:{t.hp} ATK:{t.atk} DEF:{t.def} MV:{t.move}{t.range > 1 ? ` R:${t.range}` : ''}
+                      <div className="grid grid-cols-2 gap-x-2 text-[10px] text-gray-500">
+                        <span>HP <b className="text-white font-mono">{t.hp}</b></span>
+                        <span>ATK <b className="text-white font-mono">{t.atk}</b></span>
+                        <span>DEF <b className="text-white font-mono">{t.def}</b></span>
+                        <span>MV <b className="text-white font-mono">{t.move}</b></span>
+                        {t.range > 1 && <span>RNG <b className="text-white font-mono">{t.range}</b></span>}
                       </div>
                     </div>
                   </button>
@@ -273,7 +284,7 @@ export default function SidePanel({ playerId }: Props) {
                 <p className="text-gray-500 text-[10px] text-center">Hover board to preview • click to place</p>
               )}
 
-              <button onClick={() => dispatch({ type: 'DONE_SUMMONING' })}
+              <button onClick={() => { playSfx('ui-click'); dispatch({ type: 'DONE_SUMMONING' }) }}
                 className="w-full py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs rounded font-bold mt-1">
                 Done Summoning →
               </button>
@@ -298,7 +309,7 @@ export default function SidePanel({ playerId }: Props) {
                 <p className="text-green-400 text-[10px]">All monsters have acted.</p>
               )}
               <button
-                onClick={() => mustActMonsters.length > 0 ? setShowEndConfirm(true) : dispatch({ type: 'DONE_MONSTER_ACTIONS' })}
+                onClick={() => { playSfx('ui-click'); mustActMonsters.length > 0 ? setShowEndConfirm(true) : dispatch({ type: 'DONE_MONSTER_ACTIONS' }) }}
                 className="w-full py-1.5 text-white text-sm rounded font-bold mt-auto bg-green-700 hover:bg-green-600"
               >
                 Done Actions →
@@ -311,13 +322,15 @@ export default function SidePanel({ playerId }: Props) {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="text-white text-sm font-bold capitalize">{selectedMonster.type}</span>
-                <button onClick={() => selectMonster(null)}
+                <button onClick={() => { playSfx('ui-click'); selectMonster(null) }}
                   className="text-gray-500 hover:text-white text-xs">✕</button>
               </div>
 
-              <div className="text-gray-400 text-[10px]">
-                HP:{selectedMonster.currentHp}/{selectedMonster.maxHp} ATK:{selectedMonster.atk} DEF:{selectedMonster.def}
-                {selectedMonster.state === 'defending' && <span className="text-cyan-300 ml-1">🛡</span>}
+              <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                <span>HP <b className="text-white font-mono">{selectedMonster.currentHp}/{selectedMonster.maxHp}</b></span>
+                <span>ATK <b className="text-white font-mono">{selectedMonster.atk}</b></span>
+                <span>DEF <b className="text-white font-mono">{selectedMonster.def}</b></span>
+                {selectedMonster.state === 'defending' && <span className="text-cyan-300">🛡</span>}
               </div>
 
               {/* Step 1: Movement */}
@@ -328,7 +341,7 @@ export default function SidePanel({ playerId }: Props) {
                     ? <p className="text-green-400 text-[10px]">Click a green cell to move</p>
                     : <p className="text-gray-500 text-[10px]">No reachable cells</p>
                   }
-                  <button onClick={() => selectedMonsterId && dispatch({ type: 'SKIP_MOVE', payload: { monsterId: selectedMonsterId } })}
+                  <button onClick={() => { if (selectedMonsterId) { playSfx('ui-click'); dispatch({ type: 'SKIP_MOVE', payload: { monsterId: selectedMonsterId } }) } }}
                     className="w-full py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded font-bold">
                     Stay (Skip Move)
                   </button>
@@ -337,7 +350,8 @@ export default function SidePanel({ playerId }: Props) {
 
               {/* Step 2: Combat */}
               {selectedMonster.hasMoved && !selectedMonster.hasActedThisTurn && (() => {
-                const pendingTarget = pendingAttackTargetId ? monsters[pendingAttackTargetId] : null
+                const pendingTarget = pendingAttackTargetId && attackTargets.includes(pendingAttackTargetId)
+                  ? monsters[pendingAttackTargetId] : null
                 const preview = pendingTarget ? resolveCombat(selectedMonster, pendingTarget) : null
 
                 if (preview && pendingTarget) {
@@ -372,6 +386,35 @@ export default function SidePanel({ playerId }: Props) {
                           <span>After: {Math.max(0, tHpAfter)}/{pendingTarget.maxHp} HP</span>
                         </div>
                       </div>
+                      {(() => {
+                        const splashMultiplier = MONSTER_TEMPLATES[selectedMonster.type]?.splashDamageMultiplier
+                        if (!splashMultiplier) return null
+                        const splashAtk = Math.floor(selectedMonster.atk * splashMultiplier)
+                        const splashAttacker = { ...selectedMonster, atk: splashAtk }
+                        const splashVictims = getSplashTargets(monsters, pendingTarget)
+                          .map(id => monsters[id])
+                          .filter((v): v is NonNullable<typeof v> => !!v)
+                        if (splashVictims.length === 0) return null
+                        return (
+                          <div className="bg-gray-800 rounded p-2 text-[10px] flex flex-col gap-1 border border-yellow-700/40">
+                            <div className="text-yellow-400 font-bold">🔥 Splash — {splashAtk} ATK to adjacent enemies</div>
+                            {splashVictims.map(v => {
+                              const r = resolveCombat(splashAttacker, v)
+                              const vHpAfter = Math.max(0, v.currentHp - r.defenderDamage)
+                              return (
+                                <div key={v.id} className="flex justify-between">
+                                  <span className="text-gray-400 capitalize">{v.type}</span>
+                                  <span className={r.defenderDamage > 0 ? 'text-red-400' : r.defenderBreaksShield ? 'text-orange-400' : 'text-yellow-400'}>
+                                    {r.defenderDamage > 0
+                                      ? `−${r.defenderDamage} HP (${vHpAfter}/${v.maxHp})`
+                                      : r.defenderBreaksShield ? 'shield ×' : `shield −${splashAtk}`}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )
+                      })()}
                       <button
                         onClick={() => selectedMonsterId && pendingAttackTargetId && dispatch({
                           type: 'ATTACK_TARGET',
@@ -382,7 +425,7 @@ export default function SidePanel({ playerId }: Props) {
                         Confirm Attack
                       </button>
                       <button
-                        onClick={() => setPendingAttackTarget(null)}
+                        onClick={() => { playSfx('ui-click'); setPendingAttackTarget(null) }}
                         className="w-full py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded"
                       >
                         Cancel
@@ -394,6 +437,9 @@ export default function SidePanel({ playerId }: Props) {
                 return (
                   <>
                     <div className="text-orange-300 text-xs font-bold">Step 2: Combat</div>
+                    {MONSTER_TEMPLATES[selectedMonster.type]?.passiveDescription && (
+                      <p className="text-yellow-400 text-[10px]">{MONSTER_TEMPLATES[selectedMonster.type].passiveDescription}</p>
+                    )}
                     {attackTargets.length > 0 && (
                       <p className="text-orange-400 text-[10px]">Click an orange enemy to preview attack</p>
                     )}
@@ -403,7 +449,29 @@ export default function SidePanel({ playerId }: Props) {
                         🛡 Defend
                       </button>
                     )}
-                    <button onClick={() => selectedMonsterId && dispatch({ type: 'SKIP_COMBAT', payload: { monsterId: selectedMonsterId } })}
+                    {(() => {
+                      const skillId = getMonsterSkillId(selectedMonster.type)
+                      const abilityInfo = skillId ? ABILITY_DESCRIPTIONS[skillId] : undefined
+                      if (!abilityInfo) return null
+                      return isTargetingAbility ? (
+                        <>
+                          <p className="text-cyan-300 text-[10px]">Click a highlighted tile on the board to use {abilityInfo.label}.</p>
+                          <button onClick={() => { playSfx('ui-click'); setTargetingAbility(false) }}
+                            className="w-full py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded">
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={() => { playSfx('ui-click'); setTargetingAbility(true) }}
+                            className="w-full py-1.5 bg-cyan-700 hover:bg-cyan-600 text-white text-xs rounded font-bold">
+                            🔮 {abilityInfo.label}
+                          </button>
+                          <p className="text-gray-500 text-[10px]">{abilityInfo.description}</p>
+                        </>
+                      )
+                    })()}
+                    <button onClick={() => { if (selectedMonsterId) { playSfx('ui-click'); dispatch({ type: 'SKIP_COMBAT', payload: { monsterId: selectedMonsterId } }) } }}
                       className="w-full py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded font-bold">
                       Skip Combat
                     </button>
@@ -412,7 +480,7 @@ export default function SidePanel({ playerId }: Props) {
               })()}
 
               <button
-                onClick={() => mustActMonsters.length > 0 ? setShowEndConfirm(true) : dispatch({ type: 'DONE_MONSTER_ACTIONS' })}
+                onClick={() => { playSfx('ui-click'); mustActMonsters.length > 0 ? setShowEndConfirm(true) : dispatch({ type: 'DONE_MONSTER_ACTIONS' }) }}
                 className="w-full py-1.5 text-white text-xs rounded font-bold mt-1 bg-green-700 hover:bg-green-600"
               >
                 Done Actions →
@@ -444,13 +512,13 @@ export default function SidePanel({ playerId }: Props) {
                 <p className="text-gray-400 text-[10px]">End turn anyway? Unacted monsters will forfeit their actions.</p>
                 <div className="flex gap-2 mt-1">
                   <button
-                    onClick={() => { setShowEndConfirm(false); dispatch({ type: 'FORCE_END_MONSTER_ACTIONS' }) }}
+                    onClick={() => { playSfx('ui-click'); setShowEndConfirm(false); dispatch({ type: 'FORCE_END_MONSTER_ACTIONS' }) }}
                     className="flex-1 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs rounded font-bold"
                   >
                     End Turn
                   </button>
                   <button
-                    onClick={() => setShowEndConfirm(false)}
+                    onClick={() => { playSfx('ui-click'); setShowEndConfirm(false) }}
                     className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded"
                   >
                     Cancel

@@ -66,7 +66,7 @@ async function runAiTurn(difficulty: AiDifficulty): Promise<void> {
   if (s().phase !== 'summonMonster') return
 
   // Hard cap on total monsters the AI will keep on the board at once
-  const totalMonsterCap = difficulty === 'idle' ? 2 : difficulty === 'easy' ? 3 : 8
+  const totalMonsterCap = difficulty === 'idle' ? 2 : difficulty === 'easy' ? 3 : difficulty === 'medium' ? 5 : 8
   // Per-turn limit (can never exceed totalMonsterCap anyway due to the inner check)
   const maxSummons = totalMonsterCap
 

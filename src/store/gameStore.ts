@@ -5,10 +5,12 @@ import type { Monster } from '../types/monster'
 import { createInitialGameState } from '../game/init'
 import { rollD6 } from '../game/dice'
 import { generatePaths, getPathCells, validatePathPlacement } from '../game/paths'
-import { getConnectedFriendlyPath, getReachableCells, coordKey } from '../game/movement'
-import { resolveCombat, getAttackTargets } from '../game/combat'
+import { getConnectedFriendlyPath, getReachableCells, coordKey, isAdjacent, getAbilityTargets } from '../game/movement'
+import { resolveCombat, getAttackTargets, getSplashTargets } from '../game/combat'
 import { MONSTER_TEMPLATES } from '../constants/monsters'
+import { ABILITY_DEFINITIONS, getMonsterSkillId } from '../constants/abilities'
 import { MONSTER_CAP_PER_PLAYER, LUCK_SPEND_COST, P1_BASE_ROWS, P2_BASE_ROWS, BASE_COLS } from '../constants/board'
+import { useProfileStore } from './profileStore'
 
 let nextMonsterId = 1
 
@@ -35,7 +37,8 @@ function isEnemyBase(coord: Coord, owner: PlayerId): boolean {
 export type ServerBroadcastState = Omit<
   GameState,
   'selectedPathId' | 'selectedPathRotation' | 'selectedMonsterId' |
-  'selectedMonsterTemplateType' | 'inspectedMonsterId' | 'pendingAttackTargetId'
+  'selectedMonsterTemplateType' | 'inspectedMonsterId' | 'pendingAttackTargetId' |
+  'isTargetingAbility'
 >
 
 interface GameStore extends GameState {
@@ -76,6 +79,8 @@ interface GameStore extends GameState {
   setPendingAttackTarget: (id: string | null) => void
   attackTarget: (targetId: string) => void
   defendMonster: () => void
+  setTargetingAbility: (active: boolean) => void
+  useAbility: (targetCoord: Coord) => void
   skipCombat: () => void
   doneMonsterActions: () => void
   forceEndMonsterActions: () => void
@@ -122,6 +127,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       selectedMonsterTemplateType: turnChanged ? null : current.selectedMonsterTemplateType,
       inspectedMonsterId: turnChanged ? null : current.inspectedMonsterId,
       pendingAttackTargetId: turnChanged ? null : current.pendingAttackTargetId,
+      isTargetingAbility: turnChanged ? false : current.isTargetingAbility,
     })
   },
 
@@ -191,6 +197,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           selectedMonsterTemplateType: null,
           inspectedMonsterId: null,
           pendingAttackTargetId: null,
+          isTargetingAbility: false,
           log: nextLog.length > 100 ? nextLog.slice(-100) : nextLog,
         }
       })
@@ -282,6 +289,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (p.mana < template.cost) return
     if (p.monsterCount >= MONSTER_CAP_PER_PLAYER) return
 
+    // Loadout is only enforced for the human-controlled seat — the campaign
+    // AI (player2, when aiEnabled) is deliberately unaffected by the shop/
+    // loadout system and always has access to the full starter roster (see
+    // docs/SHOP_ECONOMY_SPEC.md). Online PvP never reaches this offline path
+    // at all (dispatch.ts routes it to emitAction instead), where the server
+    // is the real authority (server/game/apply.ts already checks this).
+    const isAiTurn = state.aiEnabled && state.activePlayer === 'player2'
+    if (!isAiTurn) {
+      const { loadout } = useProfileStore.getState()
+      if (loadout.length > 0 && !loadout.includes(state.selectedMonsterTemplateType)) return
+    }
+
     const cell = state.board[coord.row][coord.col]
     if (cell.type !== 'path' || cell.owner !== state.activePlayer || cell.monsterId !== null) return
 
@@ -334,11 +353,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setPendingAttackTarget: (id) => {
-    set({ pendingAttackTargetId: id })
+    // Also clears isTargetingAbility — the two modes are mutually exclusive
+    // (a monster is either being lined up for an attack or armed to use its
+    // ability, never both). Without this, arming an ability then clicking an
+    // attackable enemy left isTargetingAbility stuck true; cancelling the
+    // resulting attack preview (rather than confirming it) dropped the
+    // player back into armed-ability-targeting mode instead of the plain
+    // combat-step menu they expected from Cancel.
+    set({ pendingAttackTargetId: id, isTargetingAbility: false })
   },
 
   selectMonster: (id) => {
-    set({ selectedMonsterId: id, selectedMonsterTemplateType: null })
+    set({ selectedMonsterId: id, selectedMonsterTemplateType: null, isTargetingAbility: false, pendingAttackTargetId: null })
   },
 
   moveMonster: (targetCoord) => {
@@ -459,11 +485,45 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     }
 
+    // Splash (e.g. Dragon): enemies orthogonally adjacent to the target take reduced
+    // damage through the same shield math, but deal no counter-damage back to the attacker.
+    const splashMultiplier = MONSTER_TEMPLATES[attacker.type]?.splashDamageMultiplier
+    if (splashMultiplier) {
+      const splashAttacker = { ...attacker, atk: Math.floor(attacker.atk * splashMultiplier) }
+      for (const victimId of getSplashTargets(state.monsters, target)) {
+        const victim = updatedMonsters[victimId]
+        if (!victim) continue
+        const splashResult = resolveCombat(splashAttacker, victim)
+        const newVictimHp = victim.currentHp - splashResult.defenderDamage
+        if (newVictimHp <= 0) {
+          delete updatedMonsters[victimId]
+          newBoard[victim.coord.row][victim.coord.col] = {
+            ...newBoard[victim.coord.row][victim.coord.col], monsterId: null,
+          }
+          const vp = state.players[victim.owner]
+          set(s => ({
+            players: { ...s.players, [victim.owner]: { ...vp, monsterCount: vp.monsterCount - 1 } },
+          }))
+          extraLog.push(`💀 ${victim.owner}'s ${victim.type} was destroyed by splash!`)
+        } else {
+          const shieldBroke = victim.state === 'defending' && splashResult.defenderBreaksShield
+          updatedMonsters[victimId] = {
+            ...victim,
+            currentHp: newVictimHp,
+            currentDef: splashResult.defenderNewCurrentDef,
+            ...(shieldBroke ? { state: 'idle' as const, lastAction: null } : {}),
+          }
+        }
+        extraLog.push(`🔥 splash: ${splashResult.log}`)
+      }
+    }
+
     set(s => ({
       board: newBoard,
       monsters: updatedMonsters,
       selectedMonsterId: null,
       pendingAttackTargetId: null,
+      isTargetingAbility: false,
       log: [...s.log, result.log, ...extraLog],
     }))
   },
@@ -484,7 +544,60 @@ export const useGameStore = create<GameStore>((set, get) => ({
         [monster.id]: { ...monster, state: 'defending', currentDef: monster.def, hasActedThisTurn: true, lastAction: 'defend' },
       },
       selectedMonsterId: null,
+      isTargetingAbility: false,
       log: [...s.log, `${monster.type} defends`],
+    }))
+  },
+
+  setTargetingAbility: (active) => {
+    set({ isTargetingAbility: active })
+  },
+
+  useAbility: (targetCoord) => {
+    const state = get()
+    if (!state.selectedMonsterId) return
+    const monster = state.monsters[state.selectedMonsterId]
+    if (!monster || monster.owner !== state.activePlayer) return
+    if (monster.hasActedThisTurn || monster.state === 'summoning' || !monster.hasMoved) return
+
+    const skillId = getMonsterSkillId(monster.type)
+    const ability = skillId ? ABILITY_DEFINITIONS[skillId] : undefined
+    if (!ability) return
+    if (!isAdjacent(monster.coord, targetCoord)) return
+
+    const targetCell = state.board[targetCoord.row]?.[targetCoord.col]
+    if (!targetCell) return
+
+    const template = MONSTER_TEMPLATES[monster.type]
+    const newBoard = state.board.map(row => row.map(c => ({ ...c })))
+    let actionLog: string
+
+    if (ability.kind === 'create_path') {
+      if (targetCell.type !== 'empty') return
+      newBoard[targetCoord.row][targetCoord.col] = {
+        coord: targetCoord, type: 'path', owner: state.activePlayer, monsterId: null,
+      }
+      actionLog = `${template.label} creates a path at (${targetCoord.row},${targetCoord.col})`
+    } else if (ability.kind === 'destroy_path') {
+      if (targetCell.type !== 'path' || targetCell.monsterId !== null) return
+      newBoard[targetCoord.row][targetCoord.col] = {
+        coord: targetCoord, type: 'empty', owner: null, monsterId: null,
+      }
+      actionLog = `${template.label} destroys a path at (${targetCoord.row},${targetCoord.col})`
+    } else {
+      return
+    }
+
+    set(s => ({
+      board: newBoard,
+      monsters: {
+        ...s.monsters,
+        [monster.id]: { ...monster, state: 'idle', hasActedThisTurn: true, lastAction: 'ability' },
+      },
+      selectedMonsterId: null,
+      isTargetingAbility: false,
+      pendingAttackTargetId: null,
+      log: [...s.log, actionLog],
     }))
   },
 
@@ -510,6 +623,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set(s => ({
       monsters: { ...s.monsters, [monster.id]: { ...monster, hasActedThisTurn: true } },
       selectedMonsterId: null,
+      isTargetingAbility: false,
       log: [...s.log, `${monster.type} skips combat`],
     }))
   },
@@ -518,12 +632,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get()
     const remaining = computeMustActMonsters(state.monsters, state.board, state.activePlayer)
     if (remaining.length > 0) return
-    set(s => ({ phase: 'endTurn', selectedMonsterId: null, log: [...s.log, `${s.activePlayer} done with actions`] }))
+    set(s => ({
+      phase: 'endTurn', selectedMonsterId: null, isTargetingAbility: false,
+      log: [...s.log, `${s.activePlayer} done with actions`],
+    }))
   },
 
   forceEndMonsterActions: () => {
     if (get().phase !== 'monsterActions') return
-    set(s => ({ phase: 'endTurn', selectedMonsterId: null, log: [...s.log, `${s.activePlayer} ends actions early`] }))
+    set(s => ({
+      phase: 'endTurn', selectedMonsterId: null, isTargetingAbility: false,
+      log: [...s.log, `${s.activePlayer} ends actions early`],
+    }))
   },
 }))
 
@@ -561,4 +681,14 @@ export function selectSummonableCells(state: GameStore): Coord[] {
 export function selectMustActMonsters(state: GameStore): Monster[] {
   if (state.phase !== 'monsterActions') return []
   return computeMustActMonsters(state.monsters, state.board, state.activePlayer)
+}
+
+export function selectAbilityTargets(state: GameStore): Coord[] {
+  if (!state.isTargetingAbility || !state.selectedMonsterId) return []
+  const monster = state.monsters[state.selectedMonsterId]
+  if (!monster) return []
+  const skillId = getMonsterSkillId(monster.type)
+  const ability = skillId ? ABILITY_DEFINITIONS[skillId] : undefined
+  if (!ability) return []
+  return getAbilityTargets(state.board, monster, ability.kind)
 }

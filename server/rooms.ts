@@ -2,6 +2,9 @@ import type { Server, Socket } from 'socket.io'
 import type { ServerGameState, GameAction, PlayerId } from './game/types.js'
 import { createInitialMatchState } from './game/init.js'
 import { applyAction, runEndTurnAndAutoPhases } from './game/apply.js'
+import { prisma } from './db.js'
+import { STARTER_MONSTERS } from './game/economy.js'
+import { applyMatchResult } from './profile.js'
 
 interface PlayerInfo {
   socketId: string
@@ -15,6 +18,12 @@ interface Room {
   code: string
   players: Partial<Record<PlayerId, PlayerInfo>>
   state: ServerGameState | null
+  // True once emitGameOver has run for this room — the authoritative "is this
+  // match over" flag. Distinct from state.winner: forfeit endings never set
+  // state.winner, so relying on that alone let a stale disconnect timer (or a
+  // real win racing a pending forfeit) fire emitGameOver a second time and
+  // double-award PvP gold/stats.
+  matchEnded: boolean
   turnTimerHandle: ReturnType<typeof setTimeout> | null
   turnTimerInterval: ReturnType<typeof setInterval> | null
   turnEndTime: number | null
@@ -59,7 +68,7 @@ function startTurnTimer(io: Server, room: Room) {
 
   room.turnTimerHandle = setTimeout(() => {
     stopTurnTimer(room)
-    if (!room.state || room.state.winner) return
+    if (!room.state || room.matchEnded) return
 
     const activePlayer = room.state.activePlayer
     // Force end from any phase
@@ -79,19 +88,48 @@ function startTurnTimer(io: Server, room: Room) {
   }, TURN_MS)
 }
 
+// Covers every end-of-match path (normal win, timer-forced end, quit, disconnect
+// forfeit) — a single choke point so PvP gold/stats are recorded exactly once
+// per match regardless of how it ended. Fire-and-forget: the game_over
+// broadcast to clients must not wait on a database round trip, and a
+// transient DB failure here shouldn't affect the match outcome the players see.
+function recordPvpResult(room: Room, winner: PlayerId) {
+  const loser: PlayerId = winner === 'player1' ? 'player2' : 'player1'
+  const winnerId = room.players[winner]?.userId
+  const loserId = room.players[loser]?.userId
+  if (winnerId) applyMatchResult(winnerId, 'pvp', 'win').catch(err => console.error('Failed to record PvP win:', err))
+  if (loserId) applyMatchResult(loserId, 'pvp', 'loss').catch(err => console.error('Failed to record PvP loss:', err))
+}
+
 function emitGameOver(io: Server, room: Room, winner: PlayerId, reason: 'win' | 'forfeit') {
+  if (room.matchEnded) return  // already recorded — blocks a stale disconnect timer or a duplicate call
+  room.matchEnded = true
   stopTurnTimer(room)
+  clearAllDisconnectTimers(room)
   io.to(room.code).emit('game_over', { winner, reason })
+  recordPvpResult(room, winner)
   scheduleRoomCleanup(room)
 }
 
+// Clears every pending disconnect-forfeit timer/interval in the room — called
+// once a match is over by any means, so a disconnect that happened earlier in
+// the same match can't still fire its own forfeit after the fact.
+function clearAllDisconnectTimers(room: Room) {
+  for (const handle of Object.values(room.disconnectHandles)) if (handle) clearTimeout(handle)
+  for (const interval of Object.values(room.disconnectIntervals)) if (interval) clearInterval(interval)
+  room.disconnectHandles = {}
+  room.disconnectIntervals = {}
+}
+
+function deleteRoom(room: Room) {
+  rooms.delete(room.code)
+  for (const p of Object.values(room.players)) {
+    if (p) sessions.delete(p.sessionToken)
+  }
+}
+
 function scheduleRoomCleanup(room: Room) {
-  room.inactiveHandle = setTimeout(() => {
-    rooms.delete(room.code)
-    for (const p of Object.values(room.players)) {
-      if (p) sessions.delete(p.sessionToken)
-    }
-  }, ROOM_EXPIRE_MS)
+  room.inactiveHandle = setTimeout(() => deleteRoom(room), ROOM_EXPIRE_MS)
 }
 
 function findRoomForSocket(socketId: string): Room | null {
@@ -108,6 +146,14 @@ function findPlayerForSocket(room: Room, socketId: string): PlayerId | null {
     if (p?.socketId === socketId) return id as PlayerId
   }
   return null
+}
+
+// Unauthenticated dev connections (REQUIRE_SOCKET_AUTH=false, no userId) and
+// accounts with no PlayerProfile row both fall back to the free starters.
+async function fetchLoadout(userId: string | undefined): Promise<string[]> {
+  if (!userId) return STARTER_MONSTERS
+  const profile = await prisma.playerProfile.findUnique({ where: { userId } })
+  return profile?.loadout ?? STARTER_MONSTERS
 }
 
 // ── Public handlers ──────────────────────────────────────────────────────────
@@ -128,6 +174,7 @@ export function handleCreateRoom(
     code,
     players: {},
     state: null,
+    matchEnded: false,
     turnTimerHandle: null,
     turnTimerInterval: null,
     turnEndTime: null,
@@ -142,7 +189,7 @@ export function handleCreateRoom(
   socket.emit('room_created', { roomCode: code, playerId: 'player1' })
 }
 
-export function handleJoinRoom(
+export async function handleJoinRoom(
   io: Server,
   socket: Socket,
   { roomCode, nickname, sessionToken }: { roomCode: string; nickname: string; sessionToken: string },
@@ -164,7 +211,12 @@ export function handleJoinRoom(
   // Both players present — start match
   const p1 = room.players['player1']!
   const p2 = room.players['player2']!
-  room.state = createInitialMatchState()
+  const [loadout1, loadout2] = await Promise.all([fetchLoadout(p1.userId), fetchLoadout(p2.userId)])
+  // A disconnect can fire while the loadout fetch above is in flight (see
+  // handleDisconnect's `!room.state` branch) and tear the room down — don't
+  // resurrect a match for a room that's already gone.
+  if (!rooms.has(code) || room.matchEnded) return
+  room.state = createInitialMatchState({ player1: loadout1, player2: loadout2 })
 
   io.to(code).emit('match_start', {
     state: room.state,
@@ -181,7 +233,7 @@ export function handleAction(
   action: GameAction,
 ) {
   const room = findRoomForSocket(socket.id)
-  if (!room || !room.state || room.state.winner) return
+  if (!room || !room.state || room.matchEnded) return
   const playerId = findPlayerForSocket(room, socket.id)
   if (!playerId) return
 
@@ -204,7 +256,7 @@ export function handleAction(
 
 export function handleQuit(io: Server, socket: Socket) {
   const room = findRoomForSocket(socket.id)
-  if (!room || !room.state || room.state.winner) return
+  if (!room || !room.state || room.matchEnded) return
   const playerId = findPlayerForSocket(room, socket.id)
   if (!playerId) return
   if (room.state.activePlayer !== playerId) return  // only the active player may quit, mirrors applyAction's turn gate
@@ -215,9 +267,23 @@ export function handleQuit(io: Server, socket: Socket) {
 
 export function handleDisconnect(io: Server, socket: Socket) {
   const room = findRoomForSocket(socket.id)
-  if (!room || !room.state || room.state.winner) return
+  if (!room || room.matchEnded) return
   const playerId = findPlayerForSocket(room, socket.id)
   if (!playerId) return
+
+  if (!room.state) {
+    // Disconnected before the match finished setting up — either still
+    // waiting for a second player, or mid loadout-fetch in handleJoinRoom
+    // (handleJoinRoom checks matchEnded/rooms.has(code) after that await and
+    // bails out if this ran first). The socket 'disconnect' event only fires
+    // once, so this is the only chance to handle it — tear the room down
+    // instead of silently dropping it and leaving any other player waiting
+    // on a match that will never start.
+    room.matchEnded = true
+    io.to(room.code).emit('room_error', { message: 'Opponent left before the match could start.' })
+    deleteRoom(room)
+    return
+  }
 
   stopTurnTimer(room)
   io.to(room.code).emit('opponent_disconnected', { forfeitIn: FORFEIT_MS / 1000 })

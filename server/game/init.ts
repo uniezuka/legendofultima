@@ -30,7 +30,7 @@ function makePlayer(id: PlayerId, mana = STARTING_MANA) {
 
 // Creates the initial match state already advanced past the auto-phases
 // (generateMana + generatePaths), landing on rollDice for player1.
-export function createInitialMatchState(): ServerGameState {
+export function createInitialMatchState(loadouts: Record<PlayerId, string[]>): ServerGameState {
   const { paths, nextId } = generatePaths(1)
   const p1Mana = STARTING_MANA + 1  // first generateMana tick
 
@@ -53,5 +53,6 @@ export function createInitialMatchState(): ServerGameState {
     log: ['--- Turn 1: player1 ---', `player1 gains mana → ${p1Mana}`, 'Generated 3 paths'],
     nextMonsterId: 1,
     nextPathId: nextId,
+    loadouts,
   }
 }

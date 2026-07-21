@@ -15,7 +15,7 @@ The campaign serves as both the single-player mode and an extended tutorial for 
 - 10 stages defined in `src/constants/campaign.ts` (`CAMPAIGN_STAGES[]`)
 - AI difficulty ramp: stages 1–2 = `idle`, 3–4 = `easy`, 5–6 = `medium`, 7–10 = `hard`
 - AI starting mana scales from 3 (stage 1) to 6 (stage 10)
-- Stage unlock tracked in `localStorage` as `lou_campaign_unlocked`
+- Stage unlock tracked per-account in Postgres (`CampaignProgress` model), synced via `/auth/me` and `PUT /campaign-progress` — see `docs/AUTH_SPEC.md`
 - Per-stage intro text, victory outro, and defeat outro
 - Win → advance to next stage; loss → retry current stage
 
@@ -43,6 +43,8 @@ Planned unlock schedule:
 After Chapter 4, the player would have access to the full starter roster.
 
 In v1.0, all 5 monsters are available from the start of any campaign stage.
+
+**Note:** the chapter-unlock idea above has been superseded by a different mechanism — a Gold-based Shop where the player purchases new monsters (White Mage, Black Mage) and picks 5 active monsters via a Loadout screen, shared between Campaign and PvP. See `docs/SHOP_ECONOMY_SPEC.md` (status: implemented). Under that design, the player's campaign roster is always their current loadout — never randomized or restricted per stage — and the AI opponent's monster access is unaffected by any of this.
 
 ---
 
@@ -106,7 +108,7 @@ Chapter 2 Completion
 
 Cost: 4
 
-HP: 12
+HP: 10
 ATK: 4
 DEF: 6
 MOVE: 1
@@ -123,7 +125,7 @@ Chapter 3 Completion
 
 Cost: 7
 
-HP: 15
+HP: 12
 ATK: 8
 DEF: 5
 MOVE: 2
@@ -368,11 +370,11 @@ Campaign Completion
 
 # Campaign Rules
 
-The campaign functions entirely offline — no server required.
+Match logic (turns, AI, board state) runs entirely client-side — no server round-trips during a match.
 
-No account system required.
+An account is required (the app is gated by login — see `docs/AUTH_SPEC.md`) so campaign progress and Gold/Shop/Loadout data can be tied to the player.
 
-Campaign progress is stored in `localStorage` under the key `lou_campaign_unlocked` (integer — highest stage unlocked).
+Campaign progress is stored per-account in Postgres (`CampaignProgress` model — highest stage unlocked), synced via `/auth/me` and `PUT /campaign-progress`.
 
 ---
 

@@ -21,4 +21,8 @@ export interface ServerGameState {
   log: string[]
   nextMonsterId: number
   nextPathId: number
+  // Fetched once from PlayerProfile.loadout at match creation and fixed for the
+  // whole match — see docs/SHOP_ECONOMY_SPEC.md. SUMMON_MONSTER is validated
+  // against this, not against the client's claimed monster type.
+  loadouts: Record<PlayerId, string[]>
 }

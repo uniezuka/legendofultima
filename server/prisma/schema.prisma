@@ -21,6 +21,8 @@ model User {
   identities       Identity[]
   refreshTokens    RefreshToken[]
   campaignProgress CampaignProgress?
+  playerProfile    PlayerProfile?
+  matchStats       MatchStats?
 }
 
 // Email/password credential, 1:1 with User. Isolated from User so a
@@ -76,4 +78,29 @@ model CampaignProgress {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   highestUnlocked Int      @default(1)
   updatedAt       DateTime @updatedAt
+}
+
+// Gold, owned monsters, and active 5-monster loadout — 1:1 with User.
+// See docs/SHOP_ECONOMY_SPEC.md. ownedMonsters/loadout default to the 5
+// free starters; White Mage and Black Mage must be purchased via the Shop.
+model PlayerProfile {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gold          Int      @default(0)
+  ownedMonsters String[] @default(["slime", "goblin", "archer", "knight", "dragon"])
+  loadout       String[] @default(["slime", "goblin", "archer", "knight", "dragon"])
+  updatedAt     DateTime @updatedAt
+}
+
+// PvP win/loss record — 1:1 with User. See docs/SHOP_ECONOMY_SPEC.md.
+// Campaign has no win/loss record here deliberately: it's single-player
+// against a fixed-difficulty AI ramp, not a competitive result worth
+// tracking — campaign progress is already tracked via CampaignProgress.highestUnlocked.
+model MatchStats {
+  id        String @id @default(uuid())
+  userId    String @unique
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pvpWins   Int    @default(0)
+  pvpLosses Int    @default(0)
 }

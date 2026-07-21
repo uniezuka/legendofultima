@@ -6,13 +6,30 @@ export interface AuthUser {
   displayName: string
 }
 
+export interface ProfileResponse {
+  gold: number
+  ownedMonsters: string[]
+  loadout: string[]
+}
+
+// PvP-only — Campaign has no win/loss record (single-player against a fixed
+// AI ramp, not a competitive result worth tracking; see server/prisma/schema.prisma).
+export interface StatsResponse {
+  pvpWins: number
+  pvpLosses: number
+}
+
 export interface MeResponse extends AuthUser {
   campaignProgress: { highestUnlocked: number }
+  profile: ProfileResponse
+  stats: StatsResponse
 }
 
 export interface AuthResponse {
   user: AuthUser
   campaignProgress: { highestUnlocked: number }
+  profile: ProfileResponse
+  stats: StatsResponse
 }
 
 let accessToken: string | null = null
@@ -64,7 +81,7 @@ export async function signup(email: string, password: string, displayName: strin
     body: JSON.stringify({ email, password, displayName }),
   })
   setAccessToken(data.accessToken)
-  return { user: data.user, campaignProgress: data.campaignProgress }
+  return { user: data.user, campaignProgress: data.campaignProgress, profile: data.profile, stats: data.stats }
 }
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
@@ -73,7 +90,7 @@ export async function login(email: string, password: string): Promise<AuthRespon
     body: JSON.stringify({ email, password }),
   })
   setAccessToken(data.accessToken)
-  return { user: data.user, campaignProgress: data.campaignProgress }
+  return { user: data.user, campaignProgress: data.campaignProgress, profile: data.profile, stats: data.stats }
 }
 
 // Deduped: concurrent callers (e.g. several parallel requests hitting 401
@@ -105,9 +122,31 @@ export async function me(): Promise<MeResponse> {
   return request<MeResponse>('/auth/me')
 }
 
-export async function putCampaignProgress(highestUnlocked: number): Promise<{ highestUnlocked: number }> {
+export interface CampaignProgressResponse {
+  highestUnlocked: number
+  // Only present when this call's write genuinely advanced highestUnlocked —
+  // the server-verified "first clear" signal that gates the campaign-win Gold
+  // reward. See server/campaign.ts.
+  gold?: number
+}
+
+export async function putCampaignProgress(highestUnlocked: number): Promise<CampaignProgressResponse> {
   return request('/campaign-progress', {
     method: 'PUT',
     body: JSON.stringify({ highestUnlocked }),
+  })
+}
+
+export async function purchaseMonster(monsterType: string): Promise<{ gold: number; ownedMonsters: string[] }> {
+  return request('/shop/purchase', {
+    method: 'POST',
+    body: JSON.stringify({ monsterType }),
+  })
+}
+
+export async function putLoadout(monsterTypes: string[]): Promise<{ loadout: string[] }> {
+  return request('/loadout', {
+    method: 'PUT',
+    body: JSON.stringify({ monsterTypes }),
   })
 }

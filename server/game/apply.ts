@@ -2,11 +2,12 @@ import type { ServerGameState, GameAction, PlayerId, Monster, Coord } from './ty
 import { rollD6 } from './dice'
 import { generatePaths, getPathCells, validatePathPlacement } from './paths'
 import { getConnectedFriendlyPath, getReachableCells } from './movement'
-import { resolveCombat, getAttackTargets } from './combat'
+import { resolveCombat, getAttackTargets, getSplashTargets } from './combat'
 import {
   MONSTER_TEMPLATES, P1_BASE_ROWS, P2_BASE_ROWS, BASE_COLS,
   LUCK_SPEND_COST, MONSTER_CAP_PER_PLAYER,
 } from './constants'
+import { ABILITY_DEFINITIONS } from './abilities'
 import type { MonsterType } from './types'
 
 function log(state: ServerGameState, entry: string): string[] {
@@ -16,6 +17,13 @@ function log(state: ServerGameState, entry: string): string[] {
 function isEnemyBase(coord: Coord, owner: PlayerId): boolean {
   const rows = owner === 'player1' ? P2_BASE_ROWS : P1_BASE_ROWS
   return rows.includes(coord.row) && BASE_COLS.includes(coord.col)
+}
+
+// Abilities always target range 1 (orthogonal), independent of the monster's attack range stat.
+// Equivalent to shared/movement.ts's isAdjacent — kept inline/local since this validates a
+// single server-supplied target, it doesn't enumerate candidates like the client's getAbilityTargets does.
+function isOrthogonallyAdjacent(a: Coord, b: Coord): boolean {
+  return Math.abs(a.row - b.row) + Math.abs(a.col - b.col) === 1
 }
 
 function mustActMonsters(state: ServerGameState): Monster[] {
@@ -150,6 +158,7 @@ export function applyAction(
       const { monsterType, coord } = action.payload
       const template = MONSTER_TEMPLATES[monsterType as MonsterType]
       if (!template) return state
+      if (!state.loadouts[state.activePlayer].includes(monsterType)) return state
       const p = state.players[state.activePlayer]
       if (p.mana < template.cost || p.monsterCount >= MONSTER_CAP_PER_PLAYER) return state
       const cell = state.board[coord.row]?.[coord.col]
@@ -303,6 +312,37 @@ export function applyAction(
         }
       }
 
+      // Splash (e.g. Dragon): enemies orthogonally adjacent to the target take reduced
+      // damage through the same shield math, but deal no counter-damage back to the attacker.
+      const splashMultiplier = MONSTER_TEMPLATES[attacker.type]?.splashDamageMultiplier
+      if (splashMultiplier) {
+        const splashAttacker = { ...attacker, atk: Math.floor(attacker.atk * splashMultiplier) }
+        for (const victimId of getSplashTargets(state.monsters, target)) {
+          const victim = updatedMonsters[victimId]
+          if (!victim) continue
+          const splashResult = resolveCombat(splashAttacker, victim)
+          const newVictimHp = victim.currentHp - splashResult.defenderDamage
+          if (newVictimHp <= 0) {
+            delete updatedMonsters[victimId]
+            newBoard[victim.coord.row][victim.coord.col] = {
+              ...newBoard[victim.coord.row][victim.coord.col], monsterId: null,
+            }
+            const vp = updatedPlayers[victim.owner]
+            updatedPlayers = { ...updatedPlayers, [victim.owner]: { ...vp, monsterCount: vp.monsterCount - 1 } }
+            extraLog.push(`💀 ${victim.owner}'s ${victim.type} was destroyed by splash!`)
+          } else {
+            const shieldBroke = victim.state === 'defending' && splashResult.defenderBreaksShield
+            updatedMonsters[victimId] = {
+              ...victim,
+              currentHp: newVictimHp,
+              currentDef: splashResult.defenderNewCurrentDef,
+              ...(shieldBroke ? { state: 'idle' as const, lastAction: null } : {}),
+            }
+          }
+          extraLog.push(`🔥 splash: ${splashResult.log}`)
+        }
+      }
+
       return {
         ...state,
         board: newBoard,
@@ -326,6 +366,52 @@ export function applyAction(
           [monsterId]: { ...monster, state: 'defending', currentDef: monster.def, hasActedThisTurn: true, lastAction: 'defend' },
         },
         log: log(state, `${monster.type} defends`),
+      }
+    }
+
+    case 'USE_ABILITY': {
+      if (state.phase !== 'monsterActions') return state
+      const { monsterId, targetCoord } = action.payload
+      const monster = state.monsters[monsterId]
+      if (!monster || monster.owner !== state.activePlayer) return state
+      if (monster.hasActedThisTurn || monster.state === 'summoning' || !monster.hasMoved) return state
+
+      const template = MONSTER_TEMPLATES[monster.type as MonsterType]
+      const skillId = template?.skills?.[0]
+      const ability = skillId ? ABILITY_DEFINITIONS[skillId] : undefined
+      if (!ability) return state
+      if (!isOrthogonallyAdjacent(monster.coord, targetCoord)) return state
+
+      const targetCell = state.board[targetCoord.row]?.[targetCoord.col]
+      if (!targetCell) return state
+
+      const newBoard = state.board.map(row => row.map(c => ({ ...c })))
+      let actionLog: string
+
+      if (ability.kind === 'create_path') {
+        if (targetCell.type !== 'empty') return state
+        newBoard[targetCoord.row][targetCoord.col] = {
+          coord: targetCoord, type: 'path', owner: state.activePlayer, monsterId: null,
+        }
+        actionLog = `${template!.label} creates a path at (${targetCoord.row},${targetCoord.col})`
+      } else if (ability.kind === 'destroy_path') {
+        if (targetCell.type !== 'path' || targetCell.monsterId !== null) return state
+        newBoard[targetCoord.row][targetCoord.col] = {
+          coord: targetCoord, type: 'empty', owner: null, monsterId: null,
+        }
+        actionLog = `${template!.label} destroys a path at (${targetCoord.row},${targetCoord.col})`
+      } else {
+        return state
+      }
+
+      return {
+        ...state,
+        board: newBoard,
+        monsters: {
+          ...state.monsters,
+          [monsterId]: { ...monster, state: 'idle', hasActedThisTurn: true, lastAction: 'ability' },
+        },
+        log: log(state, actionLog),
       }
     }
 

@@ -8,9 +8,11 @@ Players construct magical path networks across the battlefield, summon monsters 
 
 # Current Status
 
-**Version 1.0 — Target: July 1, 2026**
+**Version 0.3.0 (Alpha)**
 
-Campaign mode and Online PvP are fully playable. 10-stage single-player campaign with progressive AI difficulty. Two-player online matches via room codes. No account system required.
+Campaign mode and Online PvP are fully playable. 10-stage single-player campaign with progressive AI difficulty. Two-player online matches via room codes. An account is required to play — Campaign, Online PvP, Help, and Updates are all gated behind login, and campaign progress is saved per-account in PostgreSQL instead of `localStorage`. See `docs/AUTH_SPEC.md` for details.
+
+Players also earn Gold from match wins/losses (Campaign and PvP) and spend it in a Shop to permanently unlock two new monsters — White Mage and Black Mage, each with a one-shot board ability (create/destroy a path tile). A Loadout screen lets the player pick 5 active monsters from everything they own, shared between Campaign and PvP. See `docs/SHOP_ECONOMY_SPEC.md` and `docs/MONSTER_ABILITIES_SPEC.md` for details.
 
 ---
 
@@ -20,7 +22,7 @@ Campaign mode and Online PvP are fully playable. 10-stage single-player campaign
 
 Reduce the enemy base HP from 3 to 0.
 
-A monster that steps onto the enemy base tile deals 1 damage and is removed.
+A monster standing on the enemy base tile can attack it like any other target, dealing damage on confirm.
 
 ## Turn Structure
 
@@ -67,8 +69,14 @@ Spend 3 Luck during Place Path to adjust the result by +1 or −1.
 | Slime | 1 | 8 | 2 | 4 | 1 | 1 |
 | Goblin | 2 | 5 | 5 | 2 | 2 | 1 |
 | Archer | 3 | 4 | 4 | 1 | 1 | 2 |
-| Knight | 4 | 12 | 4 | 6 | 1 | 1 |
-| Dragon | 7 | 15 | 8 | 5 | 2 | 1 |
+| Knight | 4 | 10 | 4 | 6 | 1 | 1 |
+| Dragon | 7 | 12 | 8 | 5 | 2 | 1 |
+| White Mage *(Shop)* | 3 | 3 | 3 | 1 | 1 | 2 |
+| Black Mage *(Shop)* | 3 | 3 | 3 | 1 | 1 | 2 |
+
+Slime through Dragon are free starters. White Mage (`create_path`) and Black Mage (`destroy_path`) are purchased with Gold in the Shop and must be added to your Loadout before they're summonable.
+
+Dragon deals splash damage — enemies orthogonally adjacent to its target take 50% of its ATK too.
 
 ## Defending State
 
@@ -86,25 +94,35 @@ Click any monster on the board to see its full stats in a detail panel.
 
 # Getting Started
 
-**Frontend (Vite dev server):**
+**First-time setup:**
 
 ```
 npm install
-npm run dev
-```
-
-Opens at: http://localhost:5173
-
-**Server (for Online PvP):**
-
-```
 cd server && npm install
-npm run dev
 ```
 
-Runs at: http://localhost:3001
+Point `server/.env`'s `DATABASE_URL` at a local Postgres instance, then:
 
-Both must be running for Online PvP to work locally.
+```
+cd server && npx prisma migrate dev
+```
+
+**Run frontend + server together (recommended):**
+
+```
+npm run dev:all
+```
+
+Frontend opens at http://localhost:5173 and talks to the server at http://localhost:3001 (`VITE_SERVER_URL`).
+
+**Or run them separately:**
+
+```
+npm run dev         # frontend only
+npm run dev:server  # server only
+```
+
+The server (accounts, campaign progress, Online PvP) must be running — the app is unusable without it since login is required.
 
 ---
 
@@ -116,7 +134,9 @@ Both must be running for Online PvP to work locally.
 | Build | Vite |
 | Styling | Tailwind CSS |
 | State | Zustand |
-| Server | Node.js + Express + Socket.io (Online PvP) |
+| Server | Node.js + Express + Socket.io (Online PvP, authoritative game state) |
+| Database | PostgreSQL via Prisma (accounts, campaign progress) |
+| Auth | JWT access tokens + httpOnly-cookie refresh tokens |
 | Hosting | Render |
 
 ---
@@ -147,13 +167,18 @@ src/
 ├── network/
 │   ├── actions.ts       # GameAction discriminated union (re-exported from shared/types)
 │   ├── dispatch.ts      # Routes actions: online → socket, offline → gameStore
-│   └── socket.ts        # Socket.io singleton + all server event handlers
+│   ├── socket.ts        # Socket.io singleton + all server event handlers
+│   └── authClient.ts    # Fetch wrapper for /auth/* + /campaign-progress, access-token refresh
 ├── store/
 │   ├── gameStore.ts     # All game state and mutations; setFromServer() for online
-│   ├── campaignStore.ts # Screen routing (title/campaign/lobby/help/updates)
-│   └── onlineStore.ts   # Online-only state (isOnline, myPlayerId, timer, etc.)
+│   ├── campaignStore.ts # Screen routing (title/campaign/lobby/help/updates/login/signup)
+│   ├── onlineStore.ts   # Online-only state (isOnline, myPlayerId, timer, etc.)
+│   └── authStore.ts     # Access token (in memory), logged-in user, login/signup/logout
 └── components/
     ├── screens/
+    │   ├── SplashScreen.tsx      # Boot-time auth check before routing to title/login
+    │   ├── LoginScreen.tsx       # Email/password login
+    │   ├── SignupScreen.tsx      # Account creation
     │   ├── TitleScreen.tsx       # Main menu with author credit
     │   ├── GameScreen.tsx        # In-game layout (sidepanels + board + log)
     │   ├── CampaignScreen.tsx    # Stage select grid
@@ -175,7 +200,14 @@ src/
         └── DisconnectOverlay.tsx # Opponent disconnected + forfeit countdown
 
 server/
-├── index.ts             # Express + Socket.io setup, /health endpoint
+├── index.ts             # Express + Socket.io setup, /health endpoint, mounts auth/campaign routes
+├── auth.ts              # /auth/signup, /auth/login, /auth/refresh, /auth/logout, /auth/me
+├── authMiddleware.ts    # requireAuth — verifies JWT for REST routes and Socket.io handshake
+├── campaign.ts          # PUT /campaign-progress (Postgres-backed highestUnlocked)
+├── tokens.ts            # Access/refresh token issuing, hashing, rotation
+├── db.ts                # Prisma client singleton
+├── prisma/
+│   └── schema.prisma    # User, Credential, Identity, RefreshToken, CampaignProgress models
 ├── rooms.ts             # Room lifecycle, turn timer, forfeit, reconnect
 └── game/
     ├── types.ts         # ServerGameState + re-exports from shared/types
@@ -196,6 +228,10 @@ server/
 |---|---|
 | GDD.md | Full game rules, combat, path, monster, and board design |
 | CLAUDE.md | Technical architecture, coding rules, AI development guide |
+| docs/AUTH_SPEC.md | Account auth + PostgreSQL technical spec (data model, endpoints, token lifecycle) |
+| docs/MULTIPLAYER_SPEC.md | Online PvP architecture (rooms, actions, reconnect, forfeit) |
+| docs/SHOP_ECONOMY_SPEC.md | Gold economy, Shop, and Loadout technical spec |
+| docs/MONSTER_ABILITIES_SPEC.md | White Mage / Black Mage ability design and implementation spec |
 | README.md | This file — setup, gameplay overview, project structure |
 
 ---
@@ -207,7 +243,7 @@ server/
 | 1 | Playable Local Match | ✅ Complete |
 | 2 | Basic AI | ✅ Complete |
 | 3 | Campaign (10 stages) | ✅ Complete |
-| 4 | Save System | Planned |
+| 4 | Save System (account auth + Postgres campaign progress) | ✅ Complete |
 | 5 | Online Multiplayer | ✅ Complete |
 
 ---

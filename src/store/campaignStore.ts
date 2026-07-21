@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { CAMPAIGN_STAGES } from '../constants/campaign'
 import { putCampaignProgress } from '../network/authClient'
+import { useProfileStore } from './profileStore'
 
-export type AppScreen = 'title' | 'campaign-select' | 'campaign-intro' | 'lobby' | 'help' | 'updates' | 'login' | 'signup'
+export type AppScreen = 'title' | 'campaign-select' | 'campaign-intro' | 'lobby' | 'help' | 'updates' | 'login' | 'signup' | 'profile'
 
 const SYNC_RETRY_ATTEMPTS = 3
 const SYNC_RETRY_DELAY_MS = 1000
@@ -11,9 +12,17 @@ const SYNC_RETRY_DELAY_MS = 1000
 // server) before giving up — silently discarding the error entirely would
 // leave the optimistic local update as the only copy of the player's
 // progress, lost the next time /auth/me overwrites it from server truth.
+// The response only carries `gold` when this write genuinely advanced
+// highestUnlocked — the server-verified "first clear" — in which case the
+// campaign-win Gold reward rides along on this same call instead of a
+// separate, independently-forgeable "I won" report (see docs/SHOP_ECONOMY_SPEC.md).
 async function syncCampaignProgress(highestUnlocked: number, attempt = 1): Promise<void> {
   try {
-    await putCampaignProgress(highestUnlocked)
+    const result = await putCampaignProgress(highestUnlocked)
+    if (result.gold !== undefined) {
+      const profile = useProfileStore.getState()
+      profile.setProfile({ gold: result.gold, ownedMonsters: profile.ownedMonsters, loadout: profile.loadout })
+    }
   } catch (err) {
     if (attempt < SYNC_RETRY_ATTEMPTS) {
       await new Promise(resolve => setTimeout(resolve, SYNC_RETRY_DELAY_MS * attempt))
@@ -36,6 +45,7 @@ interface CampaignStore {
   goToLobby: () => void
   goToHelp: () => void
   goToUpdates: () => void
+  goToProfile: () => void
   goToLogin: () => void
   goToSignup: () => void
   setHighestUnlocked: (n: number) => void
@@ -77,6 +87,8 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
   goToHelp: () => set({ screen: 'help' }),
 
   goToUpdates: () => set({ screen: 'updates' }),
+
+  goToProfile: () => set({ screen: 'profile' }),
 
   goToNextStageIntro: () => {
     const { currentStage } = get()

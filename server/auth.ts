@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { prisma } from './db.js'
 import { requireAuth, type AuthedRequest } from './authMiddleware.js'
 import { signAccessToken, generateRefreshToken, hashRefreshToken } from './tokens.js'
+import { STARTER_MONSTERS } from './game/economy.js'
 
 const REFRESH_COOKIE_NAME = 'lou_refresh'
 const REFRESH_COOKIE_PATH = '/auth'
@@ -63,6 +64,8 @@ authRouter.post('/signup', async (req: Request, res: Response) => {
     const created = await tx.user.create({ data: { email, displayName } })
     await tx.credential.create({ data: { userId: created.id, passwordHash } })
     await tx.campaignProgress.create({ data: { userId: created.id, highestUnlocked: 1 } })
+    await tx.playerProfile.create({ data: { userId: created.id } })
+    await tx.matchStats.create({ data: { userId: created.id } })
     return created
   })
 
@@ -71,6 +74,8 @@ authRouter.post('/signup', async (req: Request, res: Response) => {
     user: { id: user.id, email: user.email, displayName: user.displayName },
     accessToken,
     campaignProgress: { highestUnlocked: 1 },
+    profile: { gold: 0, ownedMonsters: STARTER_MONSTERS, loadout: STARTER_MONSTERS },
+    stats: { pvpWins: 0, pvpLosses: 0 },
   })
 })
 
@@ -81,7 +86,7 @@ authRouter.post('/login', async (req: Request, res: Response) => {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    include: { credential: true, campaignProgress: true },
+    include: { credential: true, campaignProgress: true, playerProfile: true, matchStats: true },
   })
   if (!user?.credential) return res.status(401).json({ message: 'Invalid email or password.' })
 
@@ -93,6 +98,15 @@ authRouter.post('/login', async (req: Request, res: Response) => {
     user: { id: user.id, email: user.email, displayName: user.displayName },
     accessToken,
     campaignProgress: { highestUnlocked: user.campaignProgress?.highestUnlocked ?? 1 },
+    profile: {
+      gold: user.playerProfile?.gold ?? 0,
+      ownedMonsters: user.playerProfile?.ownedMonsters ?? STARTER_MONSTERS,
+      loadout: user.playerProfile?.loadout ?? STARTER_MONSTERS,
+    },
+    stats: {
+      pvpWins: user.matchStats?.pvpWins ?? 0,
+      pvpLosses: user.matchStats?.pvpLosses ?? 0,
+    },
   })
 })
 
@@ -165,7 +179,7 @@ authRouter.post('/logout', async (req: Request, res: Response) => {
 authRouter.get('/me', requireAuth, async (req: AuthedRequest, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user!.id },
-    include: { campaignProgress: true },
+    include: { campaignProgress: true, playerProfile: true, matchStats: true },
   })
   if (!user) return res.status(404).json({ message: 'User not found.' })
 
@@ -174,5 +188,14 @@ authRouter.get('/me', requireAuth, async (req: AuthedRequest, res: Response) => 
     email: user.email,
     displayName: user.displayName,
     campaignProgress: { highestUnlocked: user.campaignProgress?.highestUnlocked ?? 1 },
+    profile: {
+      gold: user.playerProfile?.gold ?? 0,
+      ownedMonsters: user.playerProfile?.ownedMonsters ?? STARTER_MONSTERS,
+      loadout: user.playerProfile?.loadout ?? STARTER_MONSTERS,
+    },
+    stats: {
+      pvpWins: user.matchStats?.pvpWins ?? 0,
+      pvpLosses: user.matchStats?.pvpLosses ?? 0,
+    },
   })
 })

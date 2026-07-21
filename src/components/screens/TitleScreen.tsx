@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { useCampaignStore } from '../../store/campaignStore'
 import { useAuthStore } from '../../store/authStore'
+import { playSfx } from '../../audio/audioManager'
 
 // Renders logo.png with its baked-in checkerboard background stripped out.
 // Pixels that are near-white AND near-neutral (r≈g≈b > 190) are made transparent.
@@ -42,6 +43,7 @@ export default function TitleScreen() {
   const goToLobby = useCampaignStore(s => s.goToLobby)
   const goToHelp = useCampaignStore(s => s.goToHelp)
   const goToUpdates = useCampaignStore(s => s.goToUpdates)
+  const goToProfile = useCampaignStore(s => s.goToProfile)
   const logout = useAuthStore(s => s.logout)
 
   return (
@@ -69,25 +71,31 @@ export default function TitleScreen() {
 
         <div className="flex flex-col items-center gap-3">
           <button
-            onClick={goToCampaignSelect}
+            onClick={() => { playSfx('ui-click'); goToCampaignSelect() }}
             className="px-10 py-4 bg-yellow-500 hover:bg-yellow-400 text-black text-xl font-black rounded-lg transition-colors shadow-lg w-64 border-2 border-yellow-300"
           >
             ⚔ Campaign
           </button>
           <button
-            onClick={goToLobby}
+            onClick={() => { playSfx('ui-click'); goToProfile() }}
+            className="px-10 py-2 bg-gray-900/60 hover:bg-gray-800 text-gray-400 text-sm font-semibold rounded-lg transition-colors w-64 border border-gray-700"
+          >
+            👤 Profile
+          </button>
+          <button
+            onClick={() => { playSfx('ui-click'); goToLobby() }}
             className="px-10 py-3 bg-gray-800/80 hover:bg-gray-700 text-gray-200 text-base font-bold rounded-lg transition-colors shadow w-64 border border-gray-600"
           >
             ⚔ Online PvP
           </button>
           <button
-            onClick={goToHelp}
+            onClick={() => { playSfx('ui-click'); goToHelp() }}
             className="px-10 py-2 bg-gray-900/60 hover:bg-gray-800 text-gray-400 text-sm font-semibold rounded-lg transition-colors w-64 border border-gray-700"
           >
             ? How to Play
           </button>
           <button
-            onClick={goToUpdates}
+            onClick={() => { playSfx('ui-click'); goToUpdates() }}
             className="px-10 py-2 bg-gray-900/60 hover:bg-gray-800 text-gray-400 text-sm font-semibold rounded-lg transition-colors w-64 border border-gray-700"
           >
             📋 Updates

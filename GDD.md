@@ -140,7 +140,7 @@ Path Rules:
 
 * Must connect to an existing friendly path or friendly base
 * Cannot overwrite existing tiles
-* Permanent — cannot be destroyed (MVP)
+* Permanent — cannot be destroyed, except by Black Mage's `destroy_path` ability (see Monster System below)
 
 ---
 
@@ -340,7 +340,7 @@ Role: Ranged Unit — attacks without entering enemy range
 
 Cost: 4
 
-HP: 12 | ATK: 4 | DEF: 6 | MOVE: 1
+HP: 10 | ATK: 4 | DEF: 6 | MOVE: 1
 
 Role: Tank — high HP and shield value, slow
 
@@ -350,7 +350,7 @@ Role: Tank — high HP and shield value, slow
 
 Cost: 7
 
-HP: 15 | ATK: 8 | DEF: 5 | MOVE: 2
+HP: 12 | ATK: 8 | DEF: 5 | MOVE: 2
 
 Role: Late Game Power Unit — shatters any shield in one hit
 
@@ -413,6 +413,8 @@ All 5 starter monsters are available from the start in v1.0 (no unlock progressi
 
 `MonsterTemplate.skills?: string[]` is reserved for a future skill system.
 
+Two new monsters, White Mage (`create_path`) and Black Mage (`destroy_path`), consume this field — purchasable via a Gold shop rather than part of the free starter roster. See `docs/MONSTER_ABILITIES_SPEC.md` and `docs/SHOP_ECONOMY_SPEC.md`.
+
 ---
 
 # Data Storage
@@ -431,10 +433,10 @@ Database integration planned for:
 
 # Future Features
 
-* Gold Economy
-* Monster Collection and Purchases
+* Gold Economy — implemented, spec in `docs/SHOP_ECONOMY_SPEC.md`
+* Monster Collection and Purchases — implemented, spec in `docs/SHOP_ECONOMY_SPEC.md`
 * Monster Evolution
-* Additional Monsters and Abilities
-* Path Destruction
+* Additional Monsters and Abilities (White Mage, Black Mage) — implemented, spec in `docs/MONSTER_ABILITIES_SPEC.md`
+* Path Destruction (Black Mage's `destroy_path` ability) — implemented, spec in `docs/MONSTER_ABILITIES_SPEC.md`
 * 2v2 Battles
 * Ranked Play

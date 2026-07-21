@@ -1,0 +1,7 @@
+export {
+  STARTER_MONSTERS,
+  SHOP_MONSTER_PRICES,
+  ALL_MONSTER_TYPES,
+  LOADOUT_SIZE,
+  GOLD_REWARD,
+} from '../../shared/economy'

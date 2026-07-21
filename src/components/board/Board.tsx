@@ -1,11 +1,14 @@
 import { useState } from 'react'
-import { useGameStore, selectReachableCells, selectAttackTargets, selectSummonableCells, selectMustActMonsters } from '../../store/gameStore'
+import { useGameStore, selectReachableCells, selectAttackTargets, selectSummonableCells, selectMustActMonsters, selectAbilityTargets } from '../../store/gameStore'
 import { dispatch } from '../../network/dispatch'
 import Cell, { type HighlightType } from './Cell'
 import BoardEffects from './BoardEffects'
 import type { Coord } from '../../types/board'
 import { BOARD_ROWS, BOARD_COLS } from '../../constants/board'
 import { getPathCells, validatePathPlacement } from '../../game/paths'
+import { getSplashTargets } from '../../game/combat'
+import { ABILITY_DEFINITIONS, getMonsterSkillId } from '../../constants/abilities'
+import { MONSTER_TEMPLATES } from '../../constants/monsters'
 
 export default function Board() {
   const board = useGameStore(s => s.board)
@@ -22,6 +25,8 @@ export default function Board() {
   const attackTargets = useGameStore(selectAttackTargets)
   const summonCells = useGameStore(selectSummonableCells)
   const mustActMonsters = useGameStore(selectMustActMonsters)
+  const abilityTargets = useGameStore(selectAbilityTargets)
+  const isTargetingAbility = useGameStore(s => s.isTargetingAbility)
 
   const pendingAttackTargetId = useGameStore(s => s.pendingAttackTargetId)
 
@@ -55,6 +60,16 @@ export default function Board() {
   const inMoveStep = selectedMonster && !selectedMonster.hasMoved
   const inCombatStep = selectedMonster && selectedMonster.hasMoved && !selectedMonster.hasActedThisTurn
 
+  const abilityTargetSet = new Set(abilityTargets.map(c => `${c.row},${c.col}`))
+  const abilitySkillId = selectedMonster ? getMonsterSkillId(selectedMonster.type) : null
+  const abilityKind = abilitySkillId ? ABILITY_DEFINITIONS[abilitySkillId]?.kind : undefined
+
+  // Splash preview: which enemies (besides the pending target) will also be hit
+  const pendingTarget = pendingAttackTargetId ? monsters[pendingAttackTargetId] : null
+  const splashMultiplier = selectedMonster ? MONSTER_TEMPLATES[selectedMonster.type]?.splashDamageMultiplier : undefined
+  const splashTargetIds = splashMultiplier && pendingTarget ? getSplashTargets(monsters, pendingTarget) : []
+  const splashTargetSet = new Set(splashTargetIds)
+
   function getHighlight(coord: Coord, monsterId: string | null): HighlightType {
     const key = `${coord.row},${coord.col}`
 
@@ -64,6 +79,12 @@ export default function Board() {
     if (phase === 'summonMonster' && summonSet.has(key)) return 'summon'
     if (phase === 'monsterActions') {
       if (inMoveStep && reachableSet.has(key) && !monsterId) return 'reachable'
+      if (inCombatStep && isTargetingAbility && abilityTargetSet.has(key)) {
+        return abilityKind === 'destroy_path' ? 'ability-destroy' : 'ability-create'
+      }
+      if (inCombatStep && monsterId && monsterId !== pendingAttackTargetId && splashTargetSet.has(monsterId)) {
+        return 'splash-preview'
+      }
       if (inCombatStep && monsterId && attackTargets.includes(monsterId)) {
         return monsterId === pendingAttackTargetId ? 'attack-pending' : 'attackable'
       }
@@ -95,6 +116,10 @@ export default function Board() {
 
       if (selectedMonsterId && inMoveStep && reachableSet.has(key) && !monsterId) {
         dispatch({ type: 'MOVE_MONSTER', payload: { monsterId: selectedMonsterId, targetCoord: coord } })
+        return
+      }
+      if (selectedMonsterId && inCombatStep && isTargetingAbility && abilityTargetSet.has(key)) {
+        dispatch({ type: 'USE_ABILITY', payload: { monsterId: selectedMonsterId, targetCoord: coord } })
         return
       }
       if (selectedMonsterId && inCombatStep && monsterId && attackTargets.includes(monsterId)) {

@@ -12,6 +12,8 @@ export default function SignupScreen() {
   const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [mismatch, setMismatch] = useState(false)
 
@@ -74,26 +76,48 @@ export default function SignupScreen() {
 
         <div className="flex flex-col gap-1">
           <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={e => { setPassword(e.target.value); clearError(); setMismatch(false) }}
-            placeholder="At least 8 characters"
-            className="bg-gray-900 border border-gray-600 text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-yellow-500"
-            autoComplete="new-password"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={e => { setPassword(e.target.value); clearError(); setMismatch(false) }}
+              placeholder="At least 8 characters"
+              className="w-full bg-gray-900 border border-gray-600 text-white rounded px-3 py-2 pr-10 text-sm focus:outline-none focus:border-yellow-500"
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(v => !v)}
+              tabIndex={-1}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-sm"
+            >
+              {showPassword ? '🙈' : '👁'}
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Confirm Password</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={e => { setConfirmPassword(e.target.value); setMismatch(false) }}
-            placeholder="Re-enter password"
-            className="bg-gray-900 border border-gray-600 text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-yellow-500"
-            autoComplete="new-password"
-          />
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={e => { setConfirmPassword(e.target.value); setMismatch(false) }}
+              placeholder="Re-enter password"
+              className="w-full bg-gray-900 border border-gray-600 text-white rounded px-3 py-2 pr-10 text-sm focus:outline-none focus:border-yellow-500"
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(v => !v)}
+              tabIndex={-1}
+              aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-sm"
+            >
+              {showConfirmPassword ? '🙈' : '👁'}
+            </button>
+          </div>
         </div>
 
         {mismatch && <p className="text-red-400 text-sm text-center">Passwords don't match.</p>}

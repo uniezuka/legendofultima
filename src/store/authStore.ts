@@ -54,12 +54,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     inFlightBootstrap = (async () => {
       try {
         await authClient.refresh()
-        const profile = await authClient.me()
+        const me = await authClient.me()
         const { useCampaignStore } = await import('./campaignStore')
-        useCampaignStore.getState().setHighestUnlocked(profile.campaignProgress.highestUnlocked)
+        useCampaignStore.getState().setHighestUnlocked(me.campaignProgress.highestUnlocked)
+        const { useProfileStore } = await import('./profileStore')
+        useProfileStore.getState().setProfile(me.profile)
+        useProfileStore.getState().setStats(me.stats)
         set({
           status: 'authenticated',
-          user: { id: profile.id, email: profile.email, displayName: profile.displayName },
+          user: { id: me.id, email: me.email, displayName: me.displayName },
           error: null,
         })
         startRefreshLoop()
@@ -75,9 +78,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email, password) => {
     set({ error: null })
     try {
-      const { user, campaignProgress } = await authClient.login(email, password)
+      const { user, campaignProgress, profile, stats } = await authClient.login(email, password)
       const { useCampaignStore } = await import('./campaignStore')
       useCampaignStore.getState().setHighestUnlocked(campaignProgress.highestUnlocked)
+      const { useProfileStore } = await import('./profileStore')
+      useProfileStore.getState().setProfile(profile)
+      useProfileStore.getState().setStats(stats)
       set({ status: 'authenticated', user })
       startRefreshLoop()
     } catch (err) {
@@ -89,9 +95,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   signup: async (email, password, displayName) => {
     set({ error: null })
     try {
-      const { user, campaignProgress } = await authClient.signup(email, password, displayName)
+      const { user, campaignProgress, profile, stats } = await authClient.signup(email, password, displayName)
       const { useCampaignStore } = await import('./campaignStore')
       useCampaignStore.getState().setHighestUnlocked(campaignProgress.highestUnlocked)
+      const { useProfileStore } = await import('./profileStore')
+      useProfileStore.getState().setProfile(profile)
+      useProfileStore.getState().setStats(stats)
       set({ status: 'authenticated', user })
       startRefreshLoop()
     } catch (err) {
@@ -107,6 +116,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     await authClient.logout()
     const { useCampaignStore } = await import('./campaignStore')
     useCampaignStore.getState().resetCampaign()
+    const { useProfileStore } = await import('./profileStore')
+    useProfileStore.getState().reset()
     set({ status: 'unauthenticated', user: null, error: null })
   },
 

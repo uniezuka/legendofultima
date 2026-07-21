@@ -15,6 +15,7 @@ import {
 import type { GameAction } from './game/types.js'
 import { authRouter } from './auth.js'
 import { campaignRouter } from './campaign.js'
+import { profileRouter } from './profile.js'
 import { verifyAccessToken } from './tokens.js'
 
 const PORT = Number(process.env.PORT) || 3001
@@ -29,6 +30,7 @@ app.use(cookieParser())
 app.get('/health', (_req, res) => res.json({ ok: true }))
 app.use('/auth', authRouter)
 app.use('/', campaignRouter)
+app.use('/', profileRouter)
 
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
@@ -61,7 +63,14 @@ io.on('connection', (socket) => {
   })
 
   socket.on('join_room', (payload: { roomCode: string; nickname: string; sessionToken: string }) => {
-    handleJoinRoom(io, socket, payload)
+    // handleJoinRoom is async (it awaits a Postgres loadout fetch) — an
+    // uncaught rejection here would be an unhandled promise rejection, which
+    // crashes the whole process (Node's default since v15), taking down
+    // every in-progress match, not just this join attempt.
+    handleJoinRoom(io, socket, payload).catch((err) => {
+      console.error('[join_room] failed:', err)
+      socket.emit('room_error', { message: 'Failed to join room, please try again.' })
+    })
   })
 
   socket.on('action', (action: GameAction) => {
